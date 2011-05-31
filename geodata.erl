@@ -5,44 +5,26 @@
 route(Source, Target) ->
   undefined.
   
-edges(Node) ->
-  WayIDs = node2ways(Node),
+edges(NodeID) ->
+  WayIDs = node2ways(NodeID),
   Ways = lists:map(fun({_, WayID}) -> WayLookup = lookup_way(WayID),
-    [{_, _, {refs, WayDetails}}] = WayLookup, WayDetails end, WayIDs),
-  Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(Node, Refs) end, Ways)),
-  Neighbours.
-  
-neighbours(Element, List) ->
-  case List of
-    [] -> Result = [];
-    [Element] -> Result = [];
-    [Element | Rest] -> [Next | _] = Rest, Result = [Next];
-    [First | Rest] -> Result = neighbours(Element, First, Rest)
-  end,
-  Result.
-  
-neighbours(Element, Last, List) ->
-  case List of
-    [] -> Result = [Last];
-    [Element | []] -> Result = [Last];
-    [Element | Rest] -> [Next | _] = Rest, Result = [Last, Next];
-    [First | []] -> Result = [];
-    [First | Rest] -> Result = neighbours(Element, First, Rest)
-  end,
-  Result.
+    {_, _, {refs, WayDetails}} = WayLookup, WayDetails end, WayIDs),
+  Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(NodeID, Refs) end, Ways)),
+  NeighboursDetails = [{{node, Neighbour}, {distance, distance(NodeID, Neighbour)}} ||
+    Neighbour <- Neighbours],
+  NeighboursDetails.
 
 distance(NodeAID, NodeBID) ->
   {ALat, ALon} = geocoordinates(lookup_node(NodeAID)),
   {BLat, BLon} = geocoordinates(lookup_node(NodeBID)),
   LatDiff = deg2rad(ALat-BLat),
   LonDiff = deg2rad(ALon-BLon),
-  R = 6371,
+  R = 6371000,
   A = math:sin(LatDiff/2) * math:sin(LatDiff/2) +
     math:cos(deg2rad(ALat)) * math:cos(deg2rad(BLat)) *
     math:sin(LonDiff/2) * math:sin(LonDiff/2),
   C = 2*math:atan2(math:sqrt(A), math:sqrt(1-A)),
   R*C.
-
 
 % ets accessing functions:
 node2ways(NodeID) ->
@@ -62,5 +44,25 @@ geocoordinates(Node) ->
   {LatFloat, _} = string:to_float(LatString),
   {LonFloat, _} = string:to_float(LonString),
   {LatFloat, LonFloat}.
+
+% helper functions
+neighbours(Element, List) ->
+  case List of
+    [] -> Result = [];
+    [Element] -> Result = [];
+    [Element | Rest] -> [Next | _] = Rest, Result = [Next];
+    [First | Rest] -> Result = neighbours(Element, First, Rest)
+  end,
+  Result.
   
+neighbours(Element, Last, List) ->
+  case List of
+    [] -> Result = [Last];
+    [Element | []] -> Result = [Last];
+    [Element | Rest] -> [Next | _] = Rest, Result = [Last, Next];
+    [First | []] -> Result = [];
+    [First | Rest] -> Result = neighbours(Element, First, Rest)
+  end,
+  Result.
+
 deg2rad(Deg) -> Deg*math:pi()/180.
