@@ -21,7 +21,7 @@ processData('$end_of_table') ->
 processData(NextKey) ->
   [{ID, _, {refs, Refs}}] = ets:lookup(osm_ways, NextKey),
   writeNodesToWay(Refs, ID),
-  io:format("read way: ~p~n", [ID]),
+  %io:format("read way: ~p~n", [ID]),
   processData(ets:next(osm_ways, NextKey)).
   
 writeNodesToWay(Refs, WayID) ->
