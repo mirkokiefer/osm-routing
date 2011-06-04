@@ -3,7 +3,7 @@
 
 
 run() ->
-  {ok, Xml} = file:read_file("data/map.osm"),
+  {ok, Xml} = file:read_file("data/heidelberg_mannheim.osm"),
   ets:new(osm_nodes, [named_table, set, public]),
   ets:new(osm_ways, [named_table, set, public]),
   erlsom:parse_sax(Xml, [], fun event/2),
@@ -34,7 +34,7 @@ event(Event = {startElement, _, "tag", _, Attributes}, State) ->
   NewState;
 
 event(Event = {endElement, _, "node", _}, State) ->
-  io:format("end node: ~p~n", [State]),
+  %io:format("end node: ~p~n", [State]),
   {{id, ID, lat, Lat, lon, Lon}, Tags} = State,
   ets:insert(osm_nodes, {ID, {lat, Lat}, {lon, Lon}, {tags, Tags}}),
   [];
@@ -50,7 +50,7 @@ event(Event = {startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs
   NewState;
 
 event(Event = {endElement, _, "way", _}, State) ->
-  io:format("end way: ~p~n", [State]),
+  %io:format("end way: ~p~n", [State]),
   {{id, ID}, Tags, Refs} = State,
   ets:insert(osm_ways, {ID, {tags, Tags}, {refs, Refs}}),
   [];
