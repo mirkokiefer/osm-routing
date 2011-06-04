@@ -1,7 +1,10 @@
 -module(dijkstra_test).
 
--export([test/2, test_all/0, test_short/0]).
+-export([setup/0, test/2, test_all/0, test_short/0]).
 
+setup() ->
+  compile:file('dijkstra'),
+  processing:loadData().
 
 test(A, B) ->
   StartT = now(),
@@ -16,6 +19,6 @@ test_all() ->
   test(A, B).
   
 test_short() ->
-  A = '33811020',
-  B = '928125782',
+  A = '33811019',
+  B = '26999535',
   test(A, B).

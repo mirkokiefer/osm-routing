@@ -1,8 +1,8 @@
 -module(processing).
--export([run/0]).
+-export([loadData/0]).
 
 
-run() ->
+loadData() ->
   ets:file2tab("output/osm_nodes.tab"),
   ets:file2tab("output/osm_ways.tab"),
   ets:new(osm_nodes_to_ways, [named_table, bag, public]),
