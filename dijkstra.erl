@@ -87,6 +87,7 @@ recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, {Tab, Queue, V
     true -> Queue
   end,
   recurseNeighbours(Rest, Node, CurrentDistance, {Tab, NewQueue, VisitedNodes}).
+  recurseNeighbours(Rest, CurrentNode, CurrentDistance, {Tab, NewQueue, VisitedNodes}).
   
 %utility functions
 join([E1, E2| Es], S) ->
