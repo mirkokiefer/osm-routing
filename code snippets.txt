@@ -1,0 +1,6 @@
+
+extract data from osm file:
+bzcat ./data/baden-wuerttemberg.osm.bz2 | osmosis\
+  --read-xml enableDateParsing=no file=-\
+  --bounding-box top=49.573 left=8.366 bottom=49.327 right=8.776 --write-xml file=-\
+  | bzip2 > ./data/extracted.osm.bz2
