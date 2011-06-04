@@ -2,8 +2,8 @@
 -export([route/2, edges/1, neighbours/2, distance/2, lookup_node/1, geocoordinates/1]).
 
 
-route(Source, Target) ->
-  undefined.
+route(SourceID, TargetID) ->
+  dijkstra:shortest_path(SourceID, TargetID).
   
 edges(NodeID) ->
   WayIDs = node2ways(NodeID),
