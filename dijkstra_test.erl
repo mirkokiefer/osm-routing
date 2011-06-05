@@ -19,6 +19,8 @@ test_all() ->
   test(A, B).
   
 test_short() ->
-  A = '33811019',
-  B = '26999535',
-  test(A, B).
+  Johannes = '26999575',
+  Mirko = '60191569',
+  MannheimWasserturm = '534690910',
+  B = '366201864',
+  test(Mirko, Johannes).
