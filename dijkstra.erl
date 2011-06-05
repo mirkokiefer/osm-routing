@@ -4,8 +4,8 @@
 shortest_path(SourceID, TargetID) ->
   Tab = ets:new(shortest_path, [set, public]),
   VisitedNodes = ets:new(visited_nodes, [set, public]),
-  Queue = gb_trees:empty(),
-  Q1 = updateDistance(SourceID, undefined, undefined, 0, {Tab, Queue}),
+  Q1 = gb_trees:empty(),
+  ets:insert(Tab, {SourceID, {previous, undefined}, {distance, 0}}),
   Path = recurseNodes(SourceID, TargetID, Q1, {Tab, VisitedNodes}),
   Distance = getDistance(TargetID, Tab),
   io:format("path: ~p~n distance: ~p nodes: ~p ", [Path, Distance, length(Path)]),
@@ -21,7 +21,7 @@ recurseNodes(Node, Target, Queue, {Tab, VisitedNodes}) ->
   visited(Node, true, VisitedNodes),
   Q1 = priority_queue:remove({Node, getDistance(Node, Tab)}, Queue),
   Neighbours = geodata:edges(Node),
-  Q2 = updateDistances(Node, Neighbours, {Tab, Q1, VisitedNodes}),
+  Q2 = updateDistances(Node, Target, Neighbours, {Tab, Q1, VisitedNodes}),
   case gb_trees:size(Q2) of
     0 -> Tab;
     _Any -> {ClosestNode, _Distance} = priority_queue:smallest(Q2),
@@ -36,15 +36,8 @@ readPath(undefined, Path, _Tab) ->
 
 readPath(Node, Path, Tab) ->
   readPath(getPrevious(Node, Tab), [Node|Path], Tab).
-  
-linkFromPath(Path) ->
-  Coords = [geodata:geocoordinates(geodata:lookup_node(Node)) || Node <- Path],
-  CoordsString = [string:join([float_to_string(Lat), ",", float_to_string(Lon)], "") || {Lat, Lon} <- Coords],
-  Param = string:join(CoordsString, "|"),
-  string:join(["http://maps.google.com/maps/api/staticmap?", "sensor=false",
-    "&size=640x640", "&path=color:0x0000ff|weight:5|", Param], "").
 
-updateDistance(Node, PreviousNode, OldDistance, NewDistance, {Tab, Queue}) ->
+updateDistance(Node, PreviousNode, OldDistance, NewDistance, Target, {Tab, Queue}) ->
   Q1 = priority_queue:remove({Node, OldDistance}, Queue),
   Q2 = priority_queue:add({Node, NewDistance}, Q1),
   ets:insert(Tab, {Node, {previous, PreviousNode}, {distance, NewDistance}}),
@@ -71,25 +64,31 @@ notVisited(Node, VisitedNodes) ->
 visited(Node, Bool, VisitedNodes) ->
   ets:insert(VisitedNodes, {Node, Bool}).
 
-updateDistances(CurrentNode, Neighbours, {Tab, Queue, VisitedNodes}) ->
+updateDistances(CurrentNode, Target, Neighbours, {Tab, Queue, VisitedNodes}) ->
   CurrentDistance = getDistance(CurrentNode, Tab),
-  recurseNeighbours(Neighbours, CurrentNode, CurrentDistance, {Tab, Queue, VisitedNodes}).
+  recurseNeighbours(Neighbours, CurrentNode, CurrentDistance, Target, {Tab, Queue, VisitedNodes}).
 
-recurseNeighbours([], _CurrentNode, _CurrentDistance, {_Tab, Queue, _VisitedNodes}) ->
+recurseNeighbours([], _CurrentNode, _CurrentDistance, _Target, {_Tab, Queue, _VisitedNodes}) ->
   Queue;
 
-recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, {Tab, Queue, VisitedNodes}) ->
+recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, Target, {Tab, Queue, VisitedNodes}) ->
   {{node, Node}, {distance, Distance}} = Neighbour,
   NewDistance = CurrentDistance + Distance,
   OldDistance = getDistance(Node, Tab),
   NotVisited = notVisited(Node, VisitedNodes),
   NewQueue = if (NewDistance < OldDistance) and NotVisited ->
-    updateDistance(Node, CurrentNode, OldDistance, NewDistance, {Tab, Queue});
+    updateDistance(Node, CurrentNode, OldDistance, NewDistance, Target, {Tab, Queue});
     true -> Queue
   end,
-  recurseNeighbours(Rest, CurrentNode, CurrentDistance, {Tab, NewQueue, VisitedNodes}).
+  recurseNeighbours(Rest, CurrentNode, CurrentDistance, Target, {Tab, NewQueue, VisitedNodes}).
   
 %utility functions
+linkFromPath(Path) ->
+  Coords = [geodata:geocoordinates(geodata:lookup_node(Node)) || Node <- Path],
+  CoordsString = [string:join([float_to_string(Lat), ",", float_to_string(Lon)], "") || {Lat, Lon} <- Coords],
+  Param = string:join(CoordsString, "|"),
+  string:join(["http://maps.google.com/maps/api/staticmap?", "sensor=false",
+    "&size=640x640", "&path=color:0x0000ff|weight:5|", Param], "").
   
 float_to_string(Float) ->
   [String] = io_lib:format("~.7f",[Float]),
