@@ -11,7 +11,7 @@ edges(NodeID) ->
     {_, _, {refs, WayDetails}} = WayLookup, WayDetails end, WayIDs),
   Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(NodeID, Refs) end, Ways)),
   NeighboursDetails = [{{node, Neighbour}, {distance, distance(NodeID, Neighbour)}} ||
-    Neighbour <- Neighbours],
+    Neighbour <- Neighbours, lookup_node(Neighbour) =/= undefined],
   NeighboursDetails.
 
 distance(NodeAID, NodeBID) ->
@@ -35,8 +35,10 @@ lookup_way(WayID) ->
   Way.
   
 lookup_node(NodeID) ->
-  [Node] = ets:lookup(osm_nodes, NodeID),
-  Node.
+  case ets:lookup(osm_nodes, NodeID) of
+    [Node] -> Node;
+    [] -> undefined
+  end.
   
 % operators on ets data:
 geocoordinates(Node) ->
@@ -60,7 +62,7 @@ neighbours(Element, Last, List) ->
     [] -> Result = [Last];
     [Element | []] -> Result = [Last];
     [Element | Rest] -> [Next | _] = Rest, Result = [Last, Next];
-    [First | []] -> Result = [];
+    [_First | []] -> Result = [];
     [First | Rest] -> Result = neighbours(Element, First, Rest)
   end,
   Result.
