@@ -19,7 +19,8 @@ recurseNodes(Target, Target, _Queue, {Tab, _VisitedNodes}) ->
 
 recurseNodes(Node, Target, Queue, {Tab, VisitedNodes}) ->
   visited(Node, true, VisitedNodes),
-  Q1 = priority_queue:remove({Node, getDistance(Node, Tab)}, Queue),
+  %io:format("visit: ~p queue: ~p~n", [Node, Queue]),
+  Q1 = priority_queue:remove({Node, add_heuristic(getDistance(Node, Tab), Node, Target)}, Queue),
   Neighbours = geodata:edges(Node),
   Q2 = updateDistances(Node, Target, Neighbours, {Tab, Q1, VisitedNodes}),
   case gb_trees:size(Q2) of
@@ -42,9 +43,13 @@ updateDistance(Node, PreviousNode, OldDistance, NewDistance, Target, {Tab, Queue
   Q2 = priority_queue:add({Node, add_heuristic(NewDistance, Node, Target)}, Q1),
   ets:insert(Tab, {Node, {previous, PreviousNode}, {distance, NewDistance}}),
   Q2.
-  
+
+add_heuristic(undefined, _Node, _Target) ->
+  undefined;
+
 add_heuristic(Distance, Node, Target) ->
-  Distance.
+  %Distance.
+  Distance+geodata:distance(Node, Target).
   
 getDistance(Node, Tab) ->
   case ets:lookup(Tab, Node) of
