@@ -90,12 +90,6 @@ recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, {Tab, Queue, V
   recurseNeighbours(Rest, CurrentNode, CurrentDistance, {Tab, NewQueue, VisitedNodes}).
   
 %utility functions
-join([E1, E2| Es], S) ->
-  [E1, S| join([E2| Es], S)];
-join([E], _) ->
-  [E];
-join([], _) ->
-  [].
   
 float_to_string(Float) ->
   [String] = io_lib:format("~.7f",[Float]),
