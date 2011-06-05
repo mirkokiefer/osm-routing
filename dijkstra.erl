@@ -8,7 +8,9 @@ shortest_path(SourceID, TargetID) ->
   Q1 = updateDistance(SourceID, undefined, undefined, 0, {Tab, Queue}),
   Path = recurseNodes(SourceID, TargetID, Q1, {Tab, VisitedNodes}),
   Distance = getDistance(TargetID, Tab),
-  io:format("path: ~p~n distance: ~p~n", [Path, Distance]),
+  io:format("path: ~p~n distance: ~p nodes: ~p ", [Path, Distance, length(Path)]),
+  io:format("visited nodes: ~p memory: ~p~n", [ets:info(VisitedNodes, size),
+    ets:info(VisitedNodes, memory)+ets:info(Tab, memory)]),
   io:format("coordinates: ~p~n", [linkFromPath(Path)]).
   
 recurseNodes(Target, Target, _Queue, {Tab, _VisitedNodes}) ->
@@ -78,7 +80,6 @@ recurseNeighbours([], _CurrentNode, _CurrentDistance, {_Tab, Queue, _VisitedNode
 
 recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, {Tab, Queue, VisitedNodes}) ->
   {{node, Node}, {distance, Distance}} = Neighbour,
-  %io:format("n: ~p, current: ~p~n", [Node, CurrentDistance]),
   NewDistance = CurrentDistance + Distance,
   OldDistance = getDistance(Node, Tab),
   NotVisited = notVisited(Node, VisitedNodes),
@@ -86,7 +87,6 @@ recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, {Tab, Queue, V
     updateDistance(Node, CurrentNode, OldDistance, NewDistance, {Tab, Queue});
     true -> Queue
   end,
-  recurseNeighbours(Rest, Node, CurrentDistance, {Tab, NewQueue, VisitedNodes}).
   recurseNeighbours(Rest, CurrentNode, CurrentDistance, {Tab, NewQueue, VisitedNodes}).
   
 %utility functions
@@ -98,5 +98,5 @@ join([], _) ->
   [].
   
 float_to_string(Float) ->
-  [String] = io_lib:format("~.10f",[Float]),
+  [String] = io_lib:format("~.7f",[Float]),
   String.
