@@ -38,10 +38,13 @@ readPath(Node, Path, Tab) ->
   readPath(getPrevious(Node, Tab), [Node|Path], Tab).
 
 updateDistance(Node, PreviousNode, OldDistance, NewDistance, Target, {Tab, Queue}) ->
-  Q1 = priority_queue:remove({Node, OldDistance}, Queue),
-  Q2 = priority_queue:add({Node, NewDistance}, Q1),
+  Q1 = priority_queue:remove({Node, add_heuristic(OldDistance, Node, Target)}, Queue),
+  Q2 = priority_queue:add({Node, add_heuristic(NewDistance, Node, Target)}, Q1),
   ets:insert(Tab, {Node, {previous, PreviousNode}, {distance, NewDistance}}),
   Q2.
+  
+add_heuristic(Distance, Node, Target) ->
+  Distance.
   
 getDistance(Node, Tab) ->
   case ets:lookup(Tab, Node) of
