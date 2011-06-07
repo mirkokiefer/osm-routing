@@ -3,8 +3,9 @@
 -export([setup/0, test/2, test_all/0, test_short/0]).
 
 setup() ->
-  compile:file('dijkstra'),
-  processing:loadData().
+  processing:loadData(),
+  _Http = server:start().
+
 
 test(A, B) ->
   StartT = now(),
@@ -20,7 +21,9 @@ test_all() ->
   
 test_short() ->
   Johannes = '26999575',
+  Haykuhi = '1118741072',
   Mirko = '60191569',
+  Feld = '275283807',
   MannheimWasserturm = '534690910',
   B = '366201864',
-  test(Mirko, Johannes).
+  test(Mirko, Haykuhi).
