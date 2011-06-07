@@ -11,7 +11,8 @@ shortest_path(SourceID, TargetID) ->
   io:format("path: ~p~n distance: ~p nodes: ~p ", [Path, Distance, length(Path)]),
   io:format("visited nodes: ~p memory: ~p~n", [ets:info(VisitedNodes, size),
     ets:info(VisitedNodes, memory)+ets:info(Tab, memory)]),
-  io:format("coordinates: ~p~n", [linkFromPath(Path)]).
+  io:format("coordinates: ~p~n", [linkFromPath(Path)]),
+  Path.
   
 recurseNodes(Target, Target, _Queue, {Tab, _VisitedNodes}) ->
   io:format("found target: ~p~n", [Target]),
