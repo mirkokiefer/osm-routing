@@ -1,5 +1,5 @@
 -module(geodata).
--export([route/2, edges/1, neighbours/2, distance/2, lookup_node/1, geocoordinates/1]).
+-export([route/2, edges/1, nodes_to_coords/1, neighbours/2, distance/2, lookup_node/1, geocoordinates/1]).
 
 
 route(SourceID, TargetID) ->
@@ -25,6 +25,9 @@ distance(NodeAID, NodeBID) ->
     math:sin(LonDiff/2) * math:sin(LonDiff/2),
   C = 2*math:atan2(math:sqrt(A), math:sqrt(1-A)),
   R*C.
+
+nodes_to_coords(List) ->
+  [geodata:geocoordinates(geodata:lookup_node(Node)) || Node <- List].
 
 % ets accessing functions:
 node2ways(NodeID) ->
