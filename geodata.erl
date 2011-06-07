@@ -71,3 +71,16 @@ neighbours(Element, Last, List) ->
   Result.
 
 deg2rad(Deg) -> Deg*math:pi()/180.
+
+float_to_string(Float) ->
+  [String] = io_lib:format("~.7f",[Float]),
+  String.
+
+%utility functions
+linkFromPath(Path) ->
+  Coords = [geodata:geocoordinates(geodata:lookup_node(Node)) || Node <- Path],
+  CoordsString = [string:join([float_to_string(Lat), ",", float_to_string(Lon)], "") || {Lat, Lon} <- Coords],
+  Param = string:join(CoordsString, "|"),
+  string:join(["http://maps.google.com/maps/api/staticmap?", "sensor=false",
+    "&size=640x640", "&path=color:0x0000ff|weight:5|", Param], "").
+  

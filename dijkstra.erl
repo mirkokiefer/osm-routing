@@ -2,17 +2,23 @@
 -export([shortest_path/2]).
 
 shortest_path(SourceID, TargetID) ->
+  StartT = now(),
   Tab = ets:new(shortest_path, [set, public]),
   VisitedNodes = ets:new(visited_nodes, [set, public]),
   Q1 = gb_trees:empty(),
   ets:insert(Tab, {SourceID, {previous, undefined}, {distance, 0}}),
   Path = recurseNodes(SourceID, TargetID, Q1, {Tab, VisitedNodes}),
   Distance = getDistance(TargetID, Tab),
-  io:format("path: ~p~n distance: ~p nodes: ~p ", [Path, Distance, length(Path)]),
-  io:format("visited nodes: ~p memory: ~p~n", [ets:info(VisitedNodes, size),
-    ets:info(VisitedNodes, memory)+ets:info(Tab, memory)]),
-  io:format("coordinates: ~p~n", [linkFromPath(Path)]),
-  Path.
+  EndT = now(),
+  Time = timer:now_diff(EndT, StartT),
+  [{path, Path}, {distance, Distance},
+    {stats, [
+      {time, Time},
+      {nodes, length(Path)},
+      {visited_nodes, ets:info(VisitedNodes, size)},
+      {memory, ets:info(VisitedNodes, memory) + ets:info(Tab, memory)}
+    ]}
+  ].
   
 recurseNodes(Target, Target, _Queue, {Tab, _VisitedNodes}) ->
   io:format("found target: ~p~n", [Target]),
@@ -90,15 +96,3 @@ recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, Target, {Tab, 
     true -> Queue
   end,
   recurseNeighbours(Rest, CurrentNode, CurrentDistance, Target, {Tab, NewQueue, VisitedNodes}).
-  
-%utility functions
-linkFromPath(Path) ->
-  Coords = [geodata:geocoordinates(geodata:lookup_node(Node)) || Node <- Path],
-  CoordsString = [string:join([float_to_string(Lat), ",", float_to_string(Lon)], "") || {Lat, Lon} <- Coords],
-  Param = string:join(CoordsString, "|"),
-  string:join(["http://maps.google.com/maps/api/staticmap?", "sensor=false",
-    "&size=640x640", "&path=color:0x0000ff|weight:5|", Param], "").
-  
-float_to_string(Float) ->
-  [String] = io_lib:format("~.7f",[Float]),
-  String.
