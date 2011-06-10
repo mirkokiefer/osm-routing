@@ -6,8 +6,10 @@ shortest_path(SourceID, TargetID) ->
   Tab = ets:new(shortest_path, [set, public]),
   VisitedNodes = ets:new(visited_nodes, [set, public]),
   Q1 = gb_trees:empty(),
+  
   ets:insert(Tab, {SourceID, {previous, undefined}, {distance, 0}}),
   Path = recurseNodes(SourceID, TargetID, Q1, {Tab, VisitedNodes}),
+  
   Distance = getDistance(TargetID, Tab),
   EndT = now(),
   Time = timer:now_diff(EndT, StartT),
@@ -21,12 +23,10 @@ shortest_path(SourceID, TargetID) ->
   ].
   
 recurseNodes(Target, Target, _Queue, {Tab, _VisitedNodes}) ->
-  io:format("found target: ~p~n", [Target]),
   readPath(Target, Tab);
 
 recurseNodes(Node, Target, Queue, {Tab, VisitedNodes}) ->
   visited(Node, true, VisitedNodes),
-  %io:format("visit: ~p queue: ~p~n", [Node, Queue]),
   Q1 = priority_queue:remove({Node, add_heuristic(getDistance(Node, Tab), Node, Target)}, Queue),
   Neighbours = geodata:edges(Node),
   Q2 = updateDistances(Node, Target, Neighbours, {Tab, Q1, VisitedNodes}),
@@ -35,15 +35,6 @@ recurseNodes(Node, Target, Queue, {Tab, VisitedNodes}) ->
     _Any -> {ClosestNode, _Distance} = priority_queue:smallest(Q2),
       recurseNodes(ClosestNode, Target, Q2, {Tab, VisitedNodes})
   end.
-  
-readPath(Node, Tab) ->
-  readPath(Node, [], Tab).
-  
-readPath(undefined, Path, _Tab) ->
-  Path;  
-
-readPath(Node, Path, Tab) ->
-  readPath(getPrevious(Node, Tab), [Node|Path], Tab).
 
 updateDistance(Node, PreviousNode, OldDistance, NewDistance, Target, {Tab, Queue}) ->
   Q1 = priority_queue:remove({Node, add_heuristic(OldDistance, Node, Target)}, Queue),
@@ -55,29 +46,7 @@ add_heuristic(undefined, _Node, _Target) ->
   undefined;
 
 add_heuristic(Distance, Node, Target) ->
-  %Distance.
   Distance+geodata:distance(Node, Target).
-  
-getDistance(Node, Tab) ->
-  case ets:lookup(Tab, Node) of
-    [{_Node, _, {distance, Distance}}] -> Distance;
-    [] -> undefined
-  end.
-  
-getPrevious(Node, Tab) ->
-  case ets:lookup(Tab, Node) of
-    [{_Node, {previous, Previous}, {distance, _Distance}}] -> Previous;
-    [] -> undefined
-  end.
-  
-notVisited(Node, VisitedNodes) ->
-  case ets:lookup(VisitedNodes, Node) of
-    [{Node, true}] -> false;
-    [] -> true
-  end.
-  
-visited(Node, Bool, VisitedNodes) ->
-  ets:insert(VisitedNodes, {Node, Bool}).
 
 updateDistances(CurrentNode, Target, Neighbours, {Tab, Queue, VisitedNodes}) ->
   CurrentDistance = getDistance(CurrentNode, Tab),
@@ -96,3 +65,38 @@ recurseNeighbours([Neighbour|Rest], CurrentNode, CurrentDistance, Target, {Tab, 
     true -> Queue
   end,
   recurseNeighbours(Rest, CurrentNode, CurrentDistance, Target, {Tab, NewQueue, VisitedNodes}).
+
+% helper functions
+getDistance(Node, Tab) ->
+  case ets:lookup(Tab, Node) of
+    [{_Node, _, {distance, Distance}}] -> Distance;
+    [] -> undefined
+  end.
+
+% get previous node in path
+getPrevious(Node, Tab) ->
+  case ets:lookup(Tab, Node) of
+    [{_Node, {previous, Previous}, {distance, _Distance}}] -> Previous;
+    [] -> undefined
+  end.
+  
+% mark a node as visited
+visited(Node, Bool, VisitedNodes) ->
+  ets:insert(VisitedNodes, {Node, Bool}).
+  
+% check if node has not been visited
+notVisited(Node, VisitedNodes) ->
+  case ets:lookup(VisitedNodes, Node) of
+    [{Node, true}] -> false;
+    [] -> true
+  end.
+  
+% go backwards through all nodes to read the path
+readPath(Node, Tab) ->
+  readPath(Node, [], Tab).
+  
+readPath(undefined, Path, _Tab) ->
+  Path;  
+
+readPath(Node, Path, Tab) ->
+  readPath(getPrevious(Node, Tab), [Node|Path], Tab).
