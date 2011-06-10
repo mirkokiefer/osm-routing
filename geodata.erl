@@ -1,5 +1,5 @@
 -module(geodata).
--export([route/2, edges/1, nodes_to_coords/1, neighbours/2, distance/2, lookup_node/1, geocoordinates/1]).
+-export([route/2, edges/1, nodes_to_coords/1, neighbours/2, distance/2, lookup_node/1, coordinates/1]).
 
 
 route(SourceID, TargetID) ->
@@ -15,8 +15,8 @@ edges(NodeID) ->
   NeighboursDetails.
 
 distance(NodeAID, NodeBID) ->
-  {ALat, ALon} = geocoordinates(lookup_node(NodeAID)),
-  {BLat, BLon} = geocoordinates(lookup_node(NodeBID)),
+  {ALat, ALon} = coordinates(lookup_node(NodeAID)),
+  {BLat, BLon} = coordinates(lookup_node(NodeBID)),
   LatDiff = deg2rad(ALat-BLat),
   LonDiff = deg2rad(ALon-BLon),
   R = 6371000,
@@ -27,7 +27,7 @@ distance(NodeAID, NodeBID) ->
   R*C.
 
 nodes_to_coords(List) ->
-  [geodata:geocoordinates(geodata:lookup_node(Node)) || Node <- List].
+  [geodata:coordinates(geodata:lookup_node(Node)) || Node <- List].
 
 % ets accessing functions:
 node2ways(NodeID) ->
@@ -44,7 +44,7 @@ lookup_node(NodeID) ->
   end.
   
 % operators on ets data:
-geocoordinates(Node) ->
+coordinates(Node) ->
   {_, {lat, LatString}, {lon, LonString}, _} = Node,
   {LatFloat, _} = string:to_float(LatString),
   {LonFloat, _} = string:to_float(LonString),
@@ -78,7 +78,7 @@ float_to_string(Float) ->
 
 %utility functions
 linkFromPath(Path) ->
-  Coords = [geodata:geocoordinates(geodata:lookup_node(Node)) || Node <- Path],
+  Coords = [geodata:coordinates(geodata:lookup_node(Node)) || Node <- Path],
   CoordsString = [string:join([float_to_string(Lat), ",", float_to_string(Lon)], "") || {Lat, Lon} <- Coords],
   Param = string:join(CoordsString, "|"),
   string:join(["http://maps.google.com/maps/api/staticmap?", "sensor=false",
