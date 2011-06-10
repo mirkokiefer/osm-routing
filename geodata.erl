@@ -3,7 +3,7 @@
 
 
 route(SourceID, TargetID) ->
-  dijkstra:shortest_path(SourceID, TargetID).
+  astar:shortest_path(SourceID, TargetID).
   
 edges(NodeID) ->
   WayIDs = node2ways(NodeID),

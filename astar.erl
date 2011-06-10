@@ -1,4 +1,4 @@
--module(dijkstra).
+-module(astar).
 -export([shortest_path/2]).
 
 shortest_path(SourceID, TargetID) ->

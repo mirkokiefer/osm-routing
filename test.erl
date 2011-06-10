@@ -1,4 +1,4 @@
--module(dijkstra_test).
+-module(test).
 
 -export([setup/0, test/2, test_all/0, test_short/0]).
 
@@ -9,7 +9,7 @@ setup() ->
 
 test(A, B) ->
   StartT = now(),
-  dijkstra:shortest_path(A, B),
+  astar:shortest_path(A, B),
   EndT = now(),
   timer:now_diff(EndT, StartT).
   
@@ -27,3 +27,5 @@ test_short() ->
   MannheimWasserturm = '534690910',
   B = '366201864',
   test(Mirko, Haykuhi).
+  
+  % http://127.0.0.1:2904/route?source=1118741072&target=275283807
