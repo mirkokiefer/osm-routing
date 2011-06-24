@@ -1,14 +1,14 @@
 -module(geodata).
--export([route/2, edges/1, nodes_to_coords/1, neighbours/2, distance/2, lookup_node/1, coordinates/1]).
+-export([route/2, edges/1, nodes_to_coords/1, distance/2, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
 
 
 route(SourceID, TargetID) ->
   astar:shortest_path(SourceID, TargetID).
   
 edges(NodeID) ->
-  WayIDs = node2ways(NodeID),
-  Ways = lists:map(fun({_, WayID}) -> WayLookup = lookup_way(WayID),
-    {_, _, {refs, WayDetails}} = WayLookup, WayDetails end, WayIDs),
+  WayIds = node2ways(NodeID),
+  Ways = lists:map(fun(WayID) -> WayLookup = lookup_way(WayID),
+    {_, _, {refs, WayDetails}} = WayLookup, WayDetails end, WayIds),
   Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(NodeID, Refs) end, Ways)),
   NeighboursDetails = [{{node, Neighbour}, {distance, distance(NodeID, Neighbour)}} ||
     Neighbour <- Neighbours, lookup_node(Neighbour) =/= undefined],
@@ -31,7 +31,8 @@ nodes_to_coords(List) ->
 
 % ets accessing functions:
 node2ways(NodeID) ->
-  ets:lookup(osm_nodes_to_ways, NodeID).
+  Result = ets:lookup(osm_nodes_to_ways, NodeID),
+  [Way || {_Node, Way} <- Result].
   
 lookup_way(WayID) ->
   [Way] = ets:lookup(osm_ways, WayID),
