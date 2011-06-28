@@ -1,5 +1,7 @@
 -module(geodata).
--export([route/2, route_simple/2, edges/1, nodes_to_coords/1, distance/2, group_nodes/1, connecting_way/2, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
+-export([route/2, route_simple/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
+
+-export([group_nodes/1]).
 
 
 route(SourceID, TargetID) ->
@@ -34,7 +36,7 @@ nodes_to_coords(List) ->
   [geodata:coordinates(geodata:lookup_node(Node)) || Node <- List].
   
 group_nodes(Nodes) ->
-  group_nodes(Nodes, [{way, undefined}, {nodes, []}], []).
+  compute_angles(group_nodes(Nodes, [{way, undefined}, {nodes, []}], [])).
   
 group_nodes([First], [{way, Way}, {nodes, Nodes}], List) ->
   NewGroup = [{way, Way}, {nodes, lists:reverse([First|Nodes])}],
@@ -51,11 +53,34 @@ group_nodes([First|Rest], [{way, Way}, {nodes, Nodes}], List) ->
   end,
   group_nodes(Rest, NewGroup, NewList).
   
-delta_angle(GroupedNodes) ->
-  %http://www.movable-type.co.uk/scripts/latlong.html.
-  
-delta_angle([First|Rest], List) ->
+compute_angles(GroupedNodes) ->
+  compute_angles(GroupedNodes, []).
 
+compute_angles([First], List) ->
+  lists:reverse(List);
+  
+compute_angles([[_, {nodes, FirstNodes}]|Rest], List) ->
+  A = lists:last(FirstNodes),
+  [[{way, SecondWay}, {nodes, SecondNodes}]|NewRest] = Rest,
+  [B,C|_] = SecondNodes,
+  Angle = angle(A, B, C),
+  NewList = [[{way, SecondWay}, {nodes, SecondNodes}, {angle, Angle}]|List],
+  compute_angles(Rest, NewList).
+
+bearing(NodeAID, NodeBID) ->
+  {ALatDeg, ALonDeg} = coordinates(lookup_node(NodeAID)),
+  {BLatDeg, BLonDeg} = coordinates(lookup_node(NodeBID)),
+  ALat = deg2rad(ALatDeg),
+  ALon = deg2rad(ALonDeg),
+  BLat = deg2rad(BLatDeg),
+  BLon = deg2rad(BLonDeg),
+  DLon = ALon-BLon,
+  Y = math:sin(DLon)*math:cos(BLat),
+  X = math:cos(ALat)*math:sin(BLat)-math:sin(ALat)*math:cos(BLat)*math:cos(DLon),
+  rad2deg(math:atan2(Y, X))*(-1).
+  
+angle(A, B, C) ->
+  bearing(A, B)-bearing(B, C).
 
 % ets accessing functions:
 node2ways(NodeID) ->
@@ -109,6 +134,8 @@ connecting_way(NodeA, NodeB) ->
   end.
 
 deg2rad(Deg) -> Deg*math:pi()/180.
+
+rad2deg(Rad) -> Rad*180/math:pi().
 
 float_to_string(Float) ->
   [String] = io_lib:format("~.7f",[Float]),
