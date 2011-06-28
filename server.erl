@@ -21,7 +21,19 @@ loop(Req) ->
 respond("/route", [{"source", Source}, {"target", Target}], Req) ->
   try geodata:route(list_to_atom(Source), list_to_atom(Target)) of
     [{path, Path}, {distance, Distance}, {stats, Stats}] ->
-      Coords = [[{lat, Lat}, {lon, Lon}] || {Lat, Lon} <- geodata:nodes_to_coords(Path)],
+      Coords = nodes_to_coords(Path),
+      Res = [{route, Coords}, {distance, Distance}, {stats, Stats}],
+      Json = binary_to_list(iolist_to_binary(mochijson2:encode(Res))),
+      Body = io_lib:format("~s", [Json]),
+      Req:ok({"text/plain", Body})
+  catch
+    _:X -> io:format("~p~n", [X])
+  end;
+  
+respond("/route_annotated", [{"source", Source}, {"target", Target}], Req) ->
+  try geodata:route_annotated (list_to_atom(Source), list_to_atom(Target)) of
+    [{path, List}, {distance, Distance}, {stats, Stats}] ->
+      Coords = [nodes_to_coords(Path) || [{way, _}, {nodes, Path}, {angle, _}] <- List],
       Res = [{route, Coords}, {distance, Distance}, {stats, Stats}],
       Json = binary_to_list(iolist_to_binary(mochijson2:encode(Res))),
       Body = io_lib:format("~s", [Json]),
@@ -36,3 +48,6 @@ respond("/map", _Params, Req) ->
 respond(Path, _Params, Req) ->
   FileName = lists:nthtail(1, Path),
   Req:serve_file(FileName, "/Users/mirko/Desktop/Code/Projects/routing/www").
+  
+nodes_to_coords(Path) ->
+  [[{lat, Lat}, {lon, Lon}] || {Lat, Lon} <- geodata:nodes_to_coords(Path)].

@@ -1,7 +1,5 @@
 -module(geodata).
--export([route/2, route_simple/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
-
--export([group_nodes/1]).
+-export([route/2, route_simple/2, route_annotated/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
 
 
 route(SourceID, TargetID) ->
@@ -10,6 +8,10 @@ route(SourceID, TargetID) ->
 route_simple(SourceID, TargetID) ->
   [{path, Nodes}, _, _] = route(SourceID, TargetID),
   Nodes.
+  
+route_annotated(SourceID, TargetID) ->
+  [{path, Nodes}, D, S] = route(SourceID, TargetID),
+  [{path, group_nodes(Nodes)}, D, S].
   
 edges(NodeID) ->
   WayIds = node2ways(NodeID),
@@ -62,7 +64,10 @@ compute_angles([First], List) ->
 compute_angles([[_, {nodes, FirstNodes}]|Rest], List) ->
   A = lists:last(FirstNodes),
   [[{way, SecondWay}, {nodes, SecondNodes}]|NewRest] = Rest,
-  [B,C|_] = SecondNodes,
+  case SecondNodes of
+    [B,C|_] -> ok;
+    [B] -> [[_, {nodes, [C|_]}] | _]=NewRest
+  end,
   Angle = angle(A, B, C),
   NewList = [[{way, SecondWay}, {nodes, SecondNodes}, {angle, Angle}]|List],
   compute_angles(Rest, NewList).
