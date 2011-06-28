@@ -1,6 +1,7 @@
 -module(geodata).
 -export([route/2, route_simple/2, route_annotated/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
 
+-export([extract_way_tag/2]).
 
 route(SourceID, TargetID) ->
   astar:shortest_path(SourceID, TargetID).
@@ -38,7 +39,7 @@ nodes_to_coords(List) ->
   [geodata:coordinates(geodata:lookup_node(Node)) || Node <- List].
   
 group_nodes(Nodes) ->
-  compute_angles(group_nodes(Nodes, [{way, undefined}, {nodes, []}], [])).
+  compute_angles(group_nodes(Nodes, [{way, start}, {nodes, []}], [])).
   
 group_nodes([First], [{way, Way}, {nodes, Nodes}], List) ->
   NewGroup = [{way, Way}, {nodes, lists:reverse([First|Nodes])}],
@@ -47,9 +48,11 @@ group_nodes([First], [{way, Way}, {nodes, Nodes}], List) ->
 
 group_nodes([First|Rest], [{way, Way}, {nodes, Nodes}], List) ->
   [Second|_] = Rest,
+  WayName = geodata:extract_way_tag("name", Way),
   NewWay = connecting_way(First, Second),
-  case NewWay of
-    Way -> NewGroup = [{way, Way}, {nodes, [First|Nodes]}], NewList = List;
+  NewWayName = geodata:extract_way_tag("name", NewWay),
+  case NewWayName of
+    WayName -> NewGroup = [{way, Way}, {nodes, [First|Nodes]}], NewList = List;
     _ -> NewGroup = [{way, NewWay}, {nodes, [First]}],
       NewList = [[{way, Way},{nodes, lists:reverse(Nodes)}] | List]
   end,
@@ -93,8 +96,10 @@ node2ways(NodeID) ->
   [Way || {_Node, Way} <- Result].
   
 lookup_way(WayID) ->
-  [Way] = ets:lookup(osm_ways, WayID),
-  Way.
+  case ets:lookup(osm_ways, WayID) of
+    [Way] -> Way;
+    _ -> undefined
+  end.
   
 lookup_node(NodeID) ->
   case ets:lookup(osm_nodes, NodeID) of
@@ -108,6 +113,16 @@ coordinates(Node) ->
   {LatFloat, _} = string:to_float(LatString),
   {LonFloat, _} = string:to_float(LonString),
   {LatFloat, LonFloat}.
+
+extract_way_tag(FilterTag, WayID) ->
+  case lookup_way(WayID) of
+    {_, {tags, Tags}, _} ->
+      case [Value || {Tag, Value} <- Tags, Tag == FilterTag] of
+        [First|_] -> First;
+        [] -> undefined
+      end;
+    undefined -> undefined
+  end.
 
 % helper functions
 neighbours(Element, List) ->
@@ -135,7 +150,7 @@ connecting_way(NodeA, NodeB) ->
   case intersection(WaysA, WaysB) of
     [] -> undefined;
     [Way] -> Way;
-    [First | _Rest] -> First
+    [First|_] -> First
   end.
 
 deg2rad(Deg) -> Deg*math:pi()/180.
