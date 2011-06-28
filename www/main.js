@@ -33,5 +33,14 @@ function initialize() {
       strokeOpacity: 1.0,
       strokeWeight: 2
     });
+    
+    var markers = coordsArray.forEach(function(group) {
+      var options = {
+        center: group[0],
+        map: map,
+        radius: 5
+      };
+      new google.maps.Circle(options);
+    });
   });
 }
