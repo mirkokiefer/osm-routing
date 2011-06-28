@@ -18,6 +18,13 @@ function initialize() {
     coordsArray.forEach(function(group) {
       coords = coords.concat(group);
     });
+    var markerCoords = coordsArray.map(function(group) {
+      return group[0];
+    });
+    var lastArray = coordsArray[coordsArray.length-1];
+    var target = lastArray[lastArray.length-1];
+    markerCoords.push(target);
+    
     var myLatLng = new google.maps.LatLng(data.route[0][0].lat, data.route[0][0].lon);
     var myOptions = {
       zoom: 14,
@@ -34,11 +41,24 @@ function initialize() {
       strokeWeight: 2
     });
     
-    var markers = coordsArray.forEach(function(group) {
+    var startMarker = new google.maps.Marker({
+      position: markerCoords[0], 
+      map: map, 
+      title:"Start"
+    });
+    var targetMarker = new google.maps.Marker({
+      position: target, 
+      map: map, 
+      title:"Ziel"
+    });
+    markerCoords.forEach(function(coord) {
       var options = {
-        center: group[0],
+        strokeWeight:0,
+        fillColor: "#000000",
+        fillOpacity: 1,
+        center: coord,
         map: map,
-        radius: 5
+        radius: 20
       };
       new google.maps.Circle(options);
     });
