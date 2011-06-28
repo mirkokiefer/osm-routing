@@ -52,7 +52,10 @@ event(Event = {startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs
 event(Event = {endElement, _, "way", _}, State) ->
   %io:format("end way: ~p~n", [State]),
   {{id, ID}, Tags, Refs} = State,
-  ets:insert(osm_ways, {ID, {tags, Tags}, {refs, Refs}}),
+  case lists:any(fun({K, _V})-> K == "name" end, Tags) of
+    true -> ets:insert(osm_ways, {ID, {tags, Tags}, {refs, Refs}});
+    false -> ignore
+  end,
   [];
 
 %% Catch-all. Pass state on as-is
