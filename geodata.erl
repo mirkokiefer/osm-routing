@@ -1,5 +1,5 @@
 -module(geodata).
--export([route/2, route_simple/2, route_annotated/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
+-export([route/2, route_simple/2, route_annotated/2, route_description_data/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
 
 -export([extract_way_tag/2]).
 
@@ -10,9 +10,33 @@ route_simple(SourceID, TargetID) ->
   [{path, Nodes}, _, _] = route(SourceID, TargetID),
   Nodes.
   
+route_with_distances(SourceID, TargetID) ->
+  astar:shortest_path_with_distances(SourceID, TargetID).
+  
 route_annotated(SourceID, TargetID) ->
-  [{path, Nodes}, D, S] = route(SourceID, TargetID),
+  [{path, Nodes}, D, S] = route_with_distances(SourceID, TargetID),
   [{path, group_nodes(Nodes)}, D, S].
+  
+route_description_data(SourceID, TargetID) ->
+  [{path, Path}, D, _S] = route_annotated(SourceID, TargetID),
+  NewPath = calculate_way_distances(Path, []),
+  [{path, NewPath}, D].
+
+calculate_way_distances([[{way, Way}, {nodes, Nodes}, {angle, Angle}]], Output) ->
+  NewOutput = case Nodes of
+    [_SingleNode] -> [[{way, Way}, {distance, 0}, {angle, Angle}]|Output];
+    [[_, {distance, FirstD}]|Rest] -> [_, {distance, LastD}] = lists:last(Rest),
+      [[{way, Way}, {distance, LastD-FirstD}, {angle, Angle}]|Output]
+  end,
+  lists:reverse(NewOutput);
+
+calculate_way_distances([[{way, Way}, {nodes, Nodes}, {angle, Angle}]|Rest], Output) ->
+  [[_, {nodes, NextNodes}, _]|_]=Rest,
+  [[_, {distance, FirstD}]|_] = Nodes,
+  [[_, {distance, NextFirstD}]|_] = NextNodes,
+  Distance = NextFirstD-FirstD,
+  NewOutput = [[{way, Way}, {distance, Distance}, {angle, Angle}]|Output],
+  calculate_way_distances(Rest, NewOutput).
   
 edges(NodeID) ->
   WayIds = node2ways(NodeID),
@@ -28,7 +52,7 @@ distance(NodeAID, NodeBID) ->
   {BLat, BLon} = coordinates(lookup_node(NodeBID)),
   LatDiff = deg2rad(ALat-BLat),
   LonDiff = deg2rad(ALon-BLon),
-  R = 6371000,
+  R = 6367500,
   A = math:sin(LatDiff/2) * math:sin(LatDiff/2) +
     math:cos(deg2rad(ALat)) * math:cos(deg2rad(BLat)) *
     math:sin(LonDiff/2) * math:sin(LonDiff/2),
@@ -46,22 +70,23 @@ group_nodes([First], [{way, Way}, {nodes, Nodes}], List) ->
   [_Undefined | Rest] = lists:reverse([NewGroup|List]),
   Rest;
 
-group_nodes([First|Rest], [{way, Way}, {nodes, Nodes}], List) ->
+group_nodes([First|Rest], [{way, WayName}, {nodes, Nodes}], List) ->
   [Second|_] = Rest,
-  WayName = geodata:extract_way_tag("name", Way),
-  NewWay = connecting_way(First, Second),
+  [{node, FirstNode}, _] = First,
+  [{node, SecondNode}, _] = Second,
+  NewWay = connecting_way(FirstNode, SecondNode),
   NewWayName = geodata:extract_way_tag("name", NewWay),
   case NewWayName of
-    WayName -> NewGroup = [{way, Way}, {nodes, [First|Nodes]}], NewList = List;
-    _ -> NewGroup = [{way, NewWay}, {nodes, [First]}],
-      NewList = [[{way, Way},{nodes, lists:reverse(Nodes)}] | List]
+    WayName -> NewGroup = [{way, WayName}, {nodes, [First|Nodes]}], NewList = List;
+    _ -> NewGroup = [{way, NewWayName}, {nodes, [First]}],
+      NewList = [[{way, WayName},{nodes, lists:reverse(Nodes)}] | List]
   end,
   group_nodes(Rest, NewGroup, NewList).
   
 compute_angles(GroupedNodes) ->
   compute_angles(GroupedNodes, []).
 
-compute_angles([First], List) ->
+compute_angles([_First], List) ->
   lists:reverse(List);
   
 compute_angles([[_, {nodes, FirstNodes}]|Rest], List) ->
@@ -71,7 +96,10 @@ compute_angles([[_, {nodes, FirstNodes}]|Rest], List) ->
     [B,C|_] -> ok;
     [B] -> [[_, {nodes, [C|_]}] | _]=NewRest
   end,
-  Angle = angle(A, B, C),
+  [{node, NodeA}, _] = A,
+  [{node, NodeB}, _] = B,
+  [{node, NodeC}, _] = C,
+  Angle = angle(NodeA, NodeB, NodeC),
   NewList = [[{way, SecondWay}, {nodes, SecondNodes}, {angle, Angle}]|List],
   compute_angles(Rest, NewList).
 
