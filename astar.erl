@@ -1,7 +1,16 @@
 -module(astar).
--export([shortest_path/2]).
+-export([shortest_path/2, shortest_path_with_distances/2]).
 
 shortest_path(SourceID, TargetID) ->
+  [{path, Path}, Distance, Stats, _Tab] = shortest_path_internal(SourceID, TargetID),
+  [{path, Path}, Distance, Stats].
+
+shortest_path_with_distances(SourceID, TargetID) ->
+  [{path, Path}, Distance, Stats, Tab] = shortest_path_internal(SourceID, TargetID),
+  NewPath = [[{node, Node}, {distance, getDistance(Node, Tab)}] || Node <- Path],
+  [{path, NewPath}, Distance, Stats].
+
+shortest_path_internal(SourceID, TargetID) ->
   StartT = now(),
   Tab = ets:new(shortest_path, [set, public]),
   VisitedNodes = ets:new(visited_nodes, [set, public]),
@@ -9,7 +18,6 @@ shortest_path(SourceID, TargetID) ->
   
   ets:insert(Tab, {SourceID, {previous, undefined}, {distance, 0}}),
   Path = recurseNodes(SourceID, TargetID, Q1, {Tab, VisitedNodes}),
-  
   Distance = getDistance(TargetID, Tab),
   EndT = now(),
   Time = timer:now_diff(EndT, StartT),
@@ -19,7 +27,7 @@ shortest_path(SourceID, TargetID) ->
       {nodes, length(Path)},
       {visited_nodes, ets:info(VisitedNodes, size)},
       {memory, ets:info(VisitedNodes, memory) + ets:info(Tab, memory)}
-    ]}
+    ]}, Tab
   ].
   
 recurseNodes(Target, Target, _Queue, {Tab, _VisitedNodes}) ->
