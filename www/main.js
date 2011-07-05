@@ -41,26 +41,15 @@ function initialize() {
       strokeWeight: 2
     });
     
-    var startMarker = new google.maps.Marker({
-      position: markerCoords[0], 
-      map: map, 
-      title:"Start"
-    });
-    var targetMarker = new google.maps.Marker({
-      position: target, 
-      map: map, 
-      title:"Ziel"
-    });
+    var index = 1;
     markerCoords.forEach(function(coord) {
       var options = {
-        strokeWeight:0,
-        fillColor: "#000000",
-        fillOpacity: 1,
-        center: coord,
+        position: coord,
         map: map,
-        radius: 20
+        title: index.toString()
       };
-      new google.maps.Circle(options);
+      new google.maps.Marker(options);
+      index++;
     });
   });
 }
