@@ -1,5 +1,5 @@
 -module(geodata).
--export([route/2, route_simple/2, route_annotated/2, route_description_data/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
+-export([route/2, route_simple/2, route_annotated/2, route_description/2, route_description_data/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
 
 -export([extract_way_tag/2]).
 
@@ -16,6 +16,18 @@ route_with_distances(SourceID, TargetID) ->
 route_annotated(SourceID, TargetID) ->
   [{path, Nodes}, D, S] = route_with_distances(SourceID, TargetID),
   [{path, group_nodes(Nodes)}, D, S].
+  
+route_description(SourceID, TargetID) ->
+  [{path, Path}, D] = route_description_data(SourceID, TargetID),
+  Description = route_description_internal(Path, []).
+  
+route_description_internal([], Output) ->
+  lists:reverse(Output);
+  
+route_description_internal([[{way, Way}, {distance, Distance}, {angle, Angle}]|Rest], Output) ->
+  Direction = angle_to_direction(Angle),
+  NewOutput = [[{way, Way}, {distance, Distance}, {direction, Direction}]|Output],
+  route_description_internal(Rest, NewOutput).
   
 route_description_data(SourceID, TargetID) ->
   [{path, Path}, D, _S] = route_annotated(SourceID, TargetID),
@@ -116,7 +128,12 @@ bearing(NodeAID, NodeBID) ->
   rad2deg(math:atan2(Y, X))*(-1).
   
 angle(A, B, C) ->
-  bearing(A, B)-bearing(B, C).
+  Angle = bearing(A, B)-bearing(B, C),
+  NormalizedAngle = case abs(Angle)>180 of
+    true -> (-1*Angle/abs(Angle)) * (180- (abs(Angle)-180));
+    false -> Angle
+  end,
+  NormalizedAngle.
 
 % ets accessing functions:
 node2ways(NodeID) ->
@@ -188,6 +205,22 @@ rad2deg(Rad) -> Rad*180/math:pi().
 float_to_string(Float) ->
   [String] = io_lib:format("~.7f",[Float]),
   String.
+   
+direction(Direction) ->
+  case Direction of
+    straight -> "gehen Sie geradeaus";
+    left -> "biegen Sie nach links ab";
+    right -> "biegen Sie nach rechts ab";
+    to -> "in"
+  end.
+  
+angle_to_direction(Angle) ->
+  if
+    Angle > 30 -> direction(left);
+    Angle < -30 -> direction(right);
+    true -> direction(straight)
+  end.
+    
 
 %utility functions
 linkFromPath(Path) ->
