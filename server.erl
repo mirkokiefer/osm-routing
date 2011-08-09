@@ -31,7 +31,6 @@ respond("/route", [{"source", Source}, {"target", Target}], Req) ->
   end;
   
 respond("/route_annotated", [{"source", Source}, {"target", Target}], Req) ->
-  io:format("annotated: ~p~n", [Target]),
   try geodata:route_annotated(list_to_atom(Source), list_to_atom(Target)) of
     [{path, List}, {distance, Distance}, {stats, Stats}] ->
       ExtractNodes = fun(Path) -> [Node || [{node, Node}, {distance, _}] <- Path] end,
@@ -39,6 +38,20 @@ respond("/route_annotated", [{"source", Source}, {"target", Target}], Req) ->
       Res = [{route, Coords}, {distance, Distance}, {stats, Stats}],
       Json = binary_to_list(iolist_to_binary(mochijson2:encode(Res))),
       Body = io_lib:format("~s", [Json]),
+      Req:ok({"text/plain", Body})
+  catch
+    _:X -> io:format("~p~n", [X])
+  end;
+  
+respond("/route_description", [{"source", Source}, {"target", Target}], Req) ->
+  try geodata:route_description(list_to_atom(Source), list_to_atom(Target)) of
+    Description ->
+      FormattedDescription = [{[{way, list_to_binary(Way)}, Distance, {direction, list_to_binary(Direction)},
+        {walk, list_to_binary(Walk)}]} ||
+        [{way, Way}, Distance, {direction, Direction}, {walk, Walk}] <- Description],
+      NewFDesc = {[{description, FormattedDescription}]},
+      {ok, Json} = json:encode(NewFDesc),
+      Body = io_lib:format("~s", [binary_to_list(Json)]),
       Req:ok({"text/plain", Body})
   catch
     _:X -> io:format("~p~n", [X])

@@ -22,12 +22,18 @@ route_description(SourceID, TargetID) ->
   Description = route_description_internal(Path, []).
   
 route_description_internal([], Output) ->
-  lists:reverse(Output);
+  [First|Directions] = lists:reverse(Output),
+  [{way, FirstWay}, {distance, FirstDistance}, _, FirstWalk] = First,
+  NewFirst = [{way, FirstWay}, {distance, FirstDistance},
+    {direction, string:join(["Sie starten in ", FirstWay], "")}, FirstWalk],
+  NewPath = [NewFirst | Directions],
+  NewPath;
   
 route_description_internal([[{way, Way}, {distance, Distance}, {angle, Angle}]|Rest], Output) ->
-  Direction = angle_to_direction(Angle),
-  NewOutput = [[{way, Way}, {distance, Distance}, {direction, Direction}]|Output],
-  route_description_internal(Rest, NewOutput).
+  Direction = string:join([angle_to_direction(Angle), " in ", Way], ""),
+  ResolvedDirection = [[{way, Way}, {distance, Distance}, {direction, Direction},
+    {walk, distance_to_direction(Distance)}]|Output],
+  route_description_internal(Rest, ResolvedDirection).
   
 route_description_data(SourceID, TargetID) ->
   [{path, Path}, D, _S] = route_annotated(SourceID, TargetID),
@@ -203,14 +209,14 @@ deg2rad(Deg) -> Deg*math:pi()/180.
 rad2deg(Rad) -> Rad*180/math:pi().
 
 float_to_string(Float) ->
-  [String] = io_lib:format("~.7f",[Float]),
+  [String] = io_lib:format("~p",[trunc(Float)]),
   String.
    
 direction(Direction) ->
   case Direction of
-    straight -> "gehen Sie geradeaus";
-    left -> "biegen Sie nach links ab";
-    right -> "biegen Sie nach rechts ab";
+    straight -> "Gehen Sie geradeaus";
+    left -> "Biegen Sie nach links ab";
+    right -> "Biegen Sie nach rechts ab";
     to -> "in"
   end.
   
@@ -220,7 +226,9 @@ angle_to_direction(Angle) ->
     Angle < -30 -> direction(right);
     true -> direction(straight)
   end.
-    
+  
+distance_to_direction(Distance) ->
+  string:join(["Folgen Sie der Strasse fuer ", float_to_string(Distance), " m"], "").
 
 %utility functions
 linkFromPath(Path) ->

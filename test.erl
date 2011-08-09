@@ -20,12 +20,15 @@ test_all() ->
   test(A, B).
   
 test_short() ->
-  Johannes = '26999575',
   Haykuhi = '1118741072',
+  Johannes = '26999575',
   Mirko = '60191569',
   Feld = '275283807',
   MannheimWasserturm = '534690910',
   B = '366201864',
   test(Mirko, Haykuhi).
   
-  % http://127.0.0.1:2904/route?source=1118741072&target=275283807
+  % http://127.0.0.1:2904/route?source=26999575&target=1118741072
+  % http://127.0.0.1:2904/map?source=60191569&target=275283807
+  % geodata:route_annotated('1118741072', '60191569')
+  % geodata:route_description('1118741072', '60191569')
