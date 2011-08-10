@@ -1,44 +1,10 @@
 -module(geodata).
--export([route/2, route_simple/2, route_annotated/2, route_description/2, route_description_data/2, edges/1, distance/2, nodes_to_coords/1, node2ways/1, lookup_way/1, lookup_node/1, coordinates/1]).
+-export([way_distances/1, group_nodes/1, edges/1, distance/2, nodes_to_coords/1, coordinates/1]).
 
 -export([extract_way_tag/2]).
 
-route(SourceID, TargetID) ->
-  astar:shortest_path(SourceID, TargetID).
-  
-route_simple(SourceID, TargetID) ->
-  [{path, Nodes}, _, _] = route(SourceID, TargetID),
-  Nodes.
-  
-route_with_distances(SourceID, TargetID) ->
-  astar:shortest_path_with_distances(SourceID, TargetID).
-  
-route_annotated(SourceID, TargetID) ->
-  [{path, Nodes}, D, S] = route_with_distances(SourceID, TargetID),
-  [{path, group_nodes(Nodes)}, D, S].
-  
-route_description(SourceID, TargetID) ->
-  [{path, Path}, D] = route_description_data(SourceID, TargetID),
-  Description = route_description_internal(Path, []).
-  
-route_description_internal([], Output) ->
-  [First|Directions] = lists:reverse(Output),
-  [{way, FirstWay}, {distance, FirstDistance}, _, FirstWalk] = First,
-  NewFirst = [{way, FirstWay}, {distance, FirstDistance},
-    {direction, string:join(["Sie starten in ", FirstWay], "")}, FirstWalk],
-  NewPath = [NewFirst | Directions],
-  NewPath;
-  
-route_description_internal([[{way, Way}, {distance, Distance}, {angle, Angle}]|Rest], Output) ->
-  Direction = string:join([angle_to_direction(Angle), " in ", Way], ""),
-  ResolvedDirection = [[{way, Way}, {distance, Distance}, {direction, Direction},
-    {walk, distance_to_direction(Distance)}]|Output],
-  route_description_internal(Rest, ResolvedDirection).
-  
-route_description_data(SourceID, TargetID) ->
-  [{path, Path}, D, _S] = route_annotated(SourceID, TargetID),
-  NewPath = calculate_way_distances(Path, []),
-  [{path, NewPath}, D].
+way_distances(GroupedNodes) ->
+  calculate_way_distances(GroupedNodes, []).
 
 calculate_way_distances([[{way, Way}, {nodes, Nodes}, {angle, Angle}]], Output) ->
   NewOutput = case Nodes of
@@ -57,28 +23,28 @@ calculate_way_distances([[{way, Way}, {nodes, Nodes}, {angle, Angle}]|Rest], Out
   calculate_way_distances(Rest, NewOutput).
   
 edges(NodeID) ->
-  WayIds = node2ways(NodeID),
-  Ways = lists:map(fun(WayID) -> WayLookup = lookup_way(WayID),
+  WayIds = store:node2ways(NodeID),
+  Ways = lists:map(fun(WayID) -> WayLookup = store:lookup_way(WayID),
     {_, _, {refs, WayDetails}} = WayLookup, WayDetails end, WayIds),
   Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(NodeID, Refs) end, Ways)),
   NeighboursDetails = [{{node, Neighbour}, {distance, distance(NodeID, Neighbour)}} ||
-    Neighbour <- Neighbours, lookup_node(Neighbour) =/= undefined],
+    Neighbour <- Neighbours, store:lookup_node(Neighbour) =/= undefined],
   NeighboursDetails.
 
 distance(NodeAID, NodeBID) ->
-  {ALat, ALon} = coordinates(lookup_node(NodeAID)),
-  {BLat, BLon} = coordinates(lookup_node(NodeBID)),
-  LatDiff = deg2rad(ALat-BLat),
-  LonDiff = deg2rad(ALon-BLon),
+  {ALat, ALon} = coordinates(store:lookup_node(NodeAID)),
+  {BLat, BLon} = coordinates(store:lookup_node(NodeBID)),
+  LatDiff = utils:deg2rad(ALat-BLat),
+  LonDiff = utils:deg2rad(ALon-BLon),
   R = 6367500,
   A = math:sin(LatDiff/2) * math:sin(LatDiff/2) +
-    math:cos(deg2rad(ALat)) * math:cos(deg2rad(BLat)) *
+    math:cos(utils:deg2rad(ALat)) * math:cos(utils:deg2rad(BLat)) *
     math:sin(LonDiff/2) * math:sin(LonDiff/2),
   C = 2*math:atan2(math:sqrt(A), math:sqrt(1-A)),
   R*C.
 
 nodes_to_coords(List) ->
-  [geodata:coordinates(geodata:lookup_node(Node)) || Node <- List].
+  [geodata:coordinates(store:lookup_node(Node)) || Node <- List].
   
 group_nodes(Nodes) ->
   compute_angles(group_nodes(Nodes, [{way, start}, {nodes, []}], [])).
@@ -122,16 +88,16 @@ compute_angles([[_, {nodes, FirstNodes}]|Rest], List) ->
   compute_angles(Rest, NewList).
 
 bearing(NodeAID, NodeBID) ->
-  {ALatDeg, ALonDeg} = coordinates(lookup_node(NodeAID)),
-  {BLatDeg, BLonDeg} = coordinates(lookup_node(NodeBID)),
-  ALat = deg2rad(ALatDeg),
-  ALon = deg2rad(ALonDeg),
-  BLat = deg2rad(BLatDeg),
-  BLon = deg2rad(BLonDeg),
+  {ALatDeg, ALonDeg} = coordinates(store:lookup_node(NodeAID)),
+  {BLatDeg, BLonDeg} = coordinates(store:lookup_node(NodeBID)),
+  ALat = utils:deg2rad(ALatDeg),
+  ALon = utils:deg2rad(ALonDeg),
+  BLat = utils:deg2rad(BLatDeg),
+  BLon = utils:deg2rad(BLonDeg),
   DLon = ALon-BLon,
   Y = math:sin(DLon)*math:cos(BLat),
   X = math:cos(ALat)*math:sin(BLat)-math:sin(ALat)*math:cos(BLat)*math:cos(DLon),
-  rad2deg(math:atan2(Y, X))*(-1).
+  utils:rad2deg(math:atan2(Y, X))*(-1).
   
 angle(A, B, C) ->
   Angle = bearing(A, B)-bearing(B, C),
@@ -140,23 +106,6 @@ angle(A, B, C) ->
     false -> Angle
   end,
   NormalizedAngle.
-
-% ets accessing functions:
-node2ways(NodeID) ->
-  Result = ets:lookup(osm_nodes_to_ways, NodeID),
-  [Way || {_Node, Way} <- Result].
-  
-lookup_way(WayID) ->
-  case ets:lookup(osm_ways, WayID) of
-    [Way] -> Way;
-    _ -> undefined
-  end.
-  
-lookup_node(NodeID) ->
-  case ets:lookup(osm_nodes, NodeID) of
-    [Node] -> Node;
-    [] -> undefined
-  end.
   
 % operators on ets data:
 coordinates(Node) ->
@@ -166,7 +115,7 @@ coordinates(Node) ->
   {LatFloat, LonFloat}.
 
 extract_way_tag(FilterTag, WayID) ->
-  case lookup_way(WayID) of
+  case store:lookup_way(WayID) of
     {_, {tags, Tags}, _} ->
       case [Value || {Tag, Value} <- Tags, Tag == FilterTag] of
         [First|_] -> First;
@@ -196,46 +145,10 @@ neighbours(Element, Last, List) ->
   Result.
   
 connecting_way(NodeA, NodeB) ->
-  WaysA = node2ways(NodeA),
-  WaysB = node2ways(NodeB),
-  case intersection(WaysA, WaysB) of
+  WaysA = store:node2ways(NodeA),
+  WaysB = store:node2ways(NodeB),
+  case utils:intersection(WaysA, WaysB) of
     [] -> undefined;
     [Way] -> Way;
     [First|_] -> First
   end.
-
-deg2rad(Deg) -> Deg*math:pi()/180.
-
-rad2deg(Rad) -> Rad*180/math:pi().
-
-float_to_string(Float) ->
-  [String] = io_lib:format("~p",[trunc(Float)]),
-  String.
-   
-direction(Direction) ->
-  case Direction of
-    straight -> "Gehen Sie geradeaus";
-    left -> "Biegen Sie nach links ab";
-    right -> "Biegen Sie nach rechts ab";
-    to -> "in"
-  end.
-  
-angle_to_direction(Angle) ->
-  if
-    Angle > 30 -> direction(left);
-    Angle < -30 -> direction(right);
-    true -> direction(straight)
-  end.
-  
-distance_to_direction(Distance) ->
-  string:join(["Folgen Sie der Strasse fuer ", float_to_string(Distance), " m"], "").
-
-%utility functions
-linkFromPath(Path) ->
-  Coords = [geodata:coordinates(geodata:lookup_node(Node)) || Node <- Path],
-  CoordsString = [string:join([float_to_string(Lat), ",", float_to_string(Lon)], "") || {Lat, Lon} <- Coords],
-  Param = string:join(CoordsString, "|"),
-  string:join(["http://maps.google.com/maps/api/staticmap?", "sensor=false",
-    "&size=640x640", "&path=color:0x0000ff|weight:5|", Param], "").
-  
-intersection(L1,L2) -> lists:filter(fun(X) -> lists:member(X,L1) end, L2).

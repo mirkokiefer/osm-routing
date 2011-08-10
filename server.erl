@@ -19,7 +19,7 @@ loop(Req) ->
   respond(Req:get(path), lists:sort(Req:parse_qs()), Req).
   
 respond("/route", [{"source", Source}, {"target", Target}], Req) ->
-  try geodata:route(list_to_atom(Source), list_to_atom(Target)) of
+  try requests:route(list_to_atom(Source), list_to_atom(Target)) of
     [{path, Path}, {distance, Distance}, {stats, Stats}] ->
       Coords = nodes_to_coords(Path),
       Res = [{route, Coords}, {distance, Distance}, {stats, Stats}],
@@ -31,7 +31,7 @@ respond("/route", [{"source", Source}, {"target", Target}], Req) ->
   end;
   
 respond("/route_annotated", [{"source", Source}, {"target", Target}], Req) ->
-  try geodata:route_annotated(list_to_atom(Source), list_to_atom(Target)) of
+  try requests:route_annotated(list_to_atom(Source), list_to_atom(Target)) of
     [{path, List}, {distance, Distance}, {stats, Stats}] ->
       ExtractNodes = fun(Path) -> [Node || [{node, Node}, {distance, _}] <- Path] end,
       Coords = [nodes_to_coords(ExtractNodes(Path)) || [{way, _}, {nodes, Path}, {angle, _}] <- List],
@@ -44,7 +44,7 @@ respond("/route_annotated", [{"source", Source}, {"target", Target}], Req) ->
   end;
   
 respond("/route_description", [{"source", Source}, {"target", Target}], Req) ->
-  try geodata:route_description(list_to_atom(Source), list_to_atom(Target)) of
+  try requests:route_description(list_to_atom(Source), list_to_atom(Target)) of
     Description ->
       FormattedDescription = [{[{way, list_to_binary(Way)}, Distance, {direction, list_to_binary(Direction)},
         {walk, list_to_binary(Walk)}]} ||
