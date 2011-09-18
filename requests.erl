@@ -23,14 +23,14 @@ route_description_internal([], Output) ->
   [First|Directions] = lists:reverse(Output),
   [{way, FirstWay}, {distance, FirstDistance}, _, FirstWalk] = First,
   NewFirst = [{way, FirstWay}, {distance, FirstDistance},
-    {direction, string:join(["Sie starten in ", FirstWay], "")}, FirstWalk],
+    {direction, string:join([textual_direction(start), FirstWay], "")}, FirstWalk],
   NewPath = [NewFirst | Directions],
   NewPath;
   
 route_description_internal([[{way, Way}, {distance, Distance}, {angle, Angle}]|Rest], Output) ->
-  Direction = string:join([angle_to_direction(Angle), " in ", Way], ""),
+  Direction = string:join([textual_direction(angle_to_direction(Angle)), textual_direction(into), Way], ""),
   ResolvedDirection = [[{way, Way}, {distance, Distance}, {direction, Direction},
-    {walk, distance_to_direction(Distance)}]|Output],
+    {walk, distance_to_textual_direction(Distance)}]|Output],
   route_description_internal(Rest, ResolvedDirection).
   
 route_description_data(SourceID, TargetID) ->
@@ -38,20 +38,23 @@ route_description_data(SourceID, TargetID) ->
   NewPath = geodata:way_distances(Path),
   [{path, NewPath}, D].
   
-direction(Direction) ->
-  case Direction of
-    straight -> "Gehen Sie geradeaus";
-    left -> "Biegen Sie nach links ab";
-    right -> "Biegen Sie nach rechts ab";
-    to -> "in"
-  end.
-  
 angle_to_direction(Angle) ->
   if
-    Angle > 30 -> direction(left);
-    Angle < -30 -> direction(right);
-    true -> direction(straight)
+    Angle > 30 -> left;
+    Angle < -30 -> right;
+    true -> straight
   end.
   
-distance_to_direction(Distance) ->
-  string:join(["Folgen Sie der Strasse fuer ", utils:float_to_string(Distance), " m"], "").
+distance_to_textual_direction(Distance) ->
+  string:join([textual_direction(follow), utils:float_to_string(Distance), textual_direction(unit)], "").
+  
+textual_direction(Direction) ->
+  case Direction of
+    start -> "Sie starten in ";
+    straight -> "Gehen Sie geradeaus ";
+    left -> "Biegen Sie nach links ab ";
+    right -> "Biegen Sie nach rechts ab ";
+    into -> "in ";
+    follow -> "Folgen Sie der Strasse fuer ";
+    unit -> "m"
+  end.
