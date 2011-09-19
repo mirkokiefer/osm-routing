@@ -1,5 +1,6 @@
 -module(store).
 -export([node2ways/1, lookup_way/1, lookup_node/1]).
+-include("routing.hrl").
 
 node2ways(NodeID) ->
   Result = ets:lookup(osm_nodes_to_ways, NodeID),
@@ -13,6 +14,6 @@ lookup_way(WayID) ->
   
 lookup_node(NodeID) ->
   case ets:lookup(osm_nodes, NodeID) of
-    [Node] -> Node;
+    [Node={Id, {lat, Lat}, {lon ,Lon}, {tags, Tags}}] -> Node;
     [] -> undefined
   end.

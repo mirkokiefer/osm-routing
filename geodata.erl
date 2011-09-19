@@ -1,5 +1,5 @@
 -module(geodata).
--export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
+-export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
 
 edges(NodeID) ->
   WayIds = store:node2ways(NodeID),
@@ -21,12 +21,6 @@ distance(NodeAID, NodeBID) ->
     math:sin(LonDiff/2) * math:sin(LonDiff/2),
   C = 2*math:atan2(math:sqrt(A), math:sqrt(1-A)),
   R*C.
-  
-coords(Node) ->
-  {_, {lat, LatString}, {lon, LonString}, _} = Node,
-  {LatFloat, _} = string:to_float(LatString),
-  {LonFloat, _} = string:to_float(LonString),
-  {LatFloat, LonFloat}.
   
 path_angles(Path) ->
   Angles = lists:reverse(path_angles_recursive(Path, [])),
@@ -88,6 +82,12 @@ angle(A, B, C) ->
   NormalizedAngle.
 
 % helper functions
+coords(Node) ->
+  {_, {lat, LatString}, {lon, LonString}, _} = Node,
+  {LatFloat, _} = string:to_float(LatString),
+  {LonFloat, _} = string:to_float(LonString),
+  {LatFloat, LonFloat}.
+
 neighbours(Element, List) ->
   case List of
     [] -> Result = [];
