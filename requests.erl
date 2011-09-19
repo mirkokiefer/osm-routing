@@ -1,20 +1,15 @@
 -module(requests).
--export([route/2, route_annotated/2, route_description/2]).
+-export([route/2, route_description/2]).
 
 route(SourceID, TargetID) ->
   astar:shortest_path(SourceID, TargetID).
-  
-route_annotated(SourceID, TargetID) ->
-  [{path, Nodes}, D, S] = astar:shortest_path_with_distances(SourceID, TargetID),
-  [{path, geodata:group_nodes(Nodes)}, D, S].
-  
+
 route_description(SourceID, TargetID) ->
-  [{path, Path}, D, _S] = astar:shortest_path_with_distances(SourceID, TargetID),
+  [{path, Path}, _D, _S] = astar:shortest_path_with_distances(SourceID, TargetID),
   PathWithAngles = geodata:path_angles(Path),
-  io:format("~p~n", [PathWithAngles]),
   route_description_recursive(PathWithAngles, {undefined, 0}, []).
   
-route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}]], {PreviousWay, PreviousDistance}, Output) ->
+route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}]], {_PreviousWay, PreviousDistance}, Output) ->
   NewOutput = [[{node, Node}, {distance, Distance}, {angle, Angle}, {direction, none},
     {walk, at_destination(Distance-PreviousDistance)}]|Output],
   Directions = lists:reverse(NewOutput),
@@ -26,7 +21,7 @@ route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}
   LogicalDirection = angle_to_direction(Angle),
   {NewOutput, NewPreviousDistance} = case {Way, LogicalDirection} of
     {PreviousWay, straight} -> {Output, PreviousDistance};
-    Any -> RelativeDistance = Distance - PreviousDistance,
+    _Any -> RelativeDistance = Distance - PreviousDistance,
       Walk = distance_to_textual_direction(RelativeDistance),
       Direction = string:join([textual_direction(LogicalDirection), textual_direction(into), Way], ""),
       NewOutput1 = [[{node, Node}, {distance, Distance}, {angle, Angle}, {walk, Walk}, {direction, Direction}]|Output],
