@@ -3,11 +3,11 @@
 
 
 loadData() ->
-  ets:file2tab("output/osm_nodes.tab"),
-  ets:file2tab("output/osm_ways.tab"),
+  ets:file2tab("../output/osm_nodes.tab"),
+  ets:file2tab("../output/osm_ways.tab"),
   ets:new(osm_nodes_to_ways, [named_table, bag, public]),
   processData(),
-  ets:tab2file(osm_nodes_to_ways, "output/osm_nodes_to_ways.tab").
+  ets:tab2file(osm_nodes_to_ways, "../output/osm_nodes_to_ways.tab").
   
 processData() ->
   FirstKey = ets:first(osm_ways),

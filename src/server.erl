@@ -46,11 +46,11 @@ respond("/route_description", [{"from", From}, {"to", To}], Req) ->
   end;
 
 respond("/map", _Params, Req) ->
-  Req:serve_file("ui.html", filename:absname("www"));
+  Req:serve_file("ui.html", filename:absname("../www"));
 
 respond(Path, _Params, Req) ->
   FileName = lists:nthtail(1, Path),
-  Req:serve_file(FileName, filename:absname("www")).
+  Req:serve_file(FileName, filename:absname("../www")).
 
 node_to_coords(Node) ->
   {Lat, Lon} = geodata:nodeid_to_coords(Node),
