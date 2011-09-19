@@ -33,9 +33,9 @@ respond("/route", [{"source", Source}, {"target", Target}], Req) ->
 respond("/route_description", [{"source", Source}, {"target", Target}], Req) ->
   try requests:route_description(list_to_atom(Source), list_to_atom(Target)) of
     Description ->
-      FormattedDescription = [{[{way, list_to_binary(Way)}, Distance, {direction, list_to_binary(Direction)},
-        {walk, list_to_binary(Walk)}]} ||
-        [{way, Way}, Distance, {direction, Direction}, {walk, Walk}] <- Description],
+      FormattedDescription = [{[{location, {node_to_coords(NodeID)}}, Distance, {walk, list_to_binary(Walk)},
+        {direction, list_to_binary(Direction)}]} ||
+        [{node, NodeID}, Distance, _Angle, {walk, Walk}, {direction, Direction}] <- Description],
       NewFDesc = {[{description, FormattedDescription}]},
       {ok, Json} = json:encode(NewFDesc),
       Body = io_lib:format("~s", [binary_to_list(Json)]),
@@ -50,6 +50,10 @@ respond("/map", _Params, Req) ->
 respond(Path, _Params, Req) ->
   FileName = lists:nthtail(1, Path),
   Req:serve_file(FileName, filename:absname("www")).
-  
+
+node_to_coords(Node) ->
+  {Lat, Lon} = geodata:nodeid_to_coords(Node),
+  [{node, Node}, {lat, Lat}, {lon, Lon}].
+
 nodes_to_coords(Path) ->
-  [{[{lat, Lat}, {lon, Lon}]} || {Lat, Lon} <- geodata:nodes_to_coords(Path)].
+  [{[{node, Node}, {lat, Lat}, {lon, Lon}]} || {Node, {Lat, Lon}} <- lists:zip(Path, geodata:nodes_to_coords(Path))].

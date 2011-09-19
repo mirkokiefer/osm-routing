@@ -11,7 +11,7 @@ route_description(SourceID, TargetID) ->
   
 route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}]], {_PreviousWay, PreviousDistance}, Output) ->
   NewOutput = [[{node, Node}, {distance, Distance}, {angle, Angle}, {walk, at_destination(Distance-PreviousDistance),
-    {direction, none}}]|Output],
+    {direction, "none"}}]|Output],
   Directions = lists:reverse(NewOutput),
   Directions;
   
@@ -24,7 +24,7 @@ route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}
     _Any -> RelativeDistance = Distance - PreviousDistance,
       Walk = if
         RelativeDistance > 0 -> distance_to_textual_direction(RelativeDistance);
-        true -> none
+        true -> "none"
       end,
       Direction = string:join([textual_direction(LogicalDirection), textual_direction(into), Way], ""),
       NewOutput1 = [[{node, Node}, {distance, Distance}, {angle, Angle}, {walk, Walk}, {direction, Direction}]|Output],

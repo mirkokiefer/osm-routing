@@ -1,5 +1,5 @@
 -module(geodata).
--export([edges/1, distance/2, nodes_to_coords/1, coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
+-export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
 
 edges(NodeID) ->
   WayIds = store:node2ways(NodeID),
@@ -61,6 +61,9 @@ extract_way_tag(FilterTag, WayID) ->
     undefined -> undefined
   end.
   
+nodeid_to_coords(NodeID) ->
+  coords(store:lookup_node(NodeID)).
+
 nodes_to_coords(List) ->
   [coords(store:lookup_node(Node)) || Node <- List].
 
