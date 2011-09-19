@@ -26,7 +26,7 @@ route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}
         RelativeDistance > 0 -> distance_to_textual_direction(RelativeDistance);
         true -> ""
       end,
-      Direction = join([textual_direction(LogicalDirection), textual_direction(into), keyword(Way)]),
+      Direction = join_string([textual_direction(LogicalDirection), textual_direction(into), keyword(Way)]),
       NewOutput1 = [[{node, Node}, {distance, Distance}, {angle, Angle}, {walk, Walk}, {direction, Direction}]|Output],
       {NewOutput1, Distance}
   end,
@@ -40,12 +40,12 @@ angle_to_direction(Angle) ->
   end.
   
 distance_to_textual_direction(Distance) ->
-  join([textual_direction(follow), utils:float_to_string(Distance), textual_direction(unit)]).
+  join_string([textual_direction(follow), utils:float_to_string(Distance), textual_direction(unit)]).
   
 at_destination(Distance) ->
-  join([textual_direction(destination), utils:float_to_string(Distance), textual_direction(unit)]).
+  join_string([textual_direction(destination), utils:float_to_string(Distance), textual_direction(unit)]).
 
-join(List) ->
+join_string(List) ->
   string:join(List, "").
   
 keyword(Text) ->
@@ -55,9 +55,9 @@ textual_direction(Direction) ->
   case Direction of
     start -> "Sie starten in ";
     destination -> "Sie haben Ihr Ziel erreicht in ";
-    straight -> join(["Gehen Sie ", keyword("geradeaus")]);
-    left -> join(["Biegen Sie nach ", keyword("links"), " ab "]);
-    right -> join(["Biegen Sie nach ", keyword("rechts"), " ab "]);
+    straight -> join_string(["Gehen Sie ", keyword("geradeaus")]);
+    left -> join_string(["Biegen Sie nach ", keyword("links"), " ab "]);
+    right -> join_string(["Biegen Sie nach ", keyword("rechts"), " ab "]);
     into -> "in ";
     follow -> "Folgen Sie der Strasse fuer ";
     unit -> "m"
