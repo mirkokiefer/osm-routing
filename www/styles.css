@@ -1,12 +1,17 @@
-#left {
-  width: 500px;
+td {
+  vertical-align: top;
 }
 
-#code {
-  width: 480px;
-  height: 600px;
+#left-col {
+  width: 300px;
+  padding-left: 20px;
 }
 
-#right {
-  width: 500px;
+#main-table {
+  width:100%;
+  height:100%;
+}
+
+#form {
+  margin-top: 50px;
 }

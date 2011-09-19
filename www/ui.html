@@ -8,7 +8,29 @@
     <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
     <script type="text/javascript" src="main.js"></script>
   </head>
-  <body onload="initialize()"> 
-  <div id="map_canvas"></div> 
+  <body>
+  <table id="main-table">
+    <tr>
+      <td id="left-col">
+        <table id="form">
+          <tr>
+            <td>From: </td>
+            <td><input id="from" type="text" /></td>
+          </tr>
+          <tr>
+            <td>To: </td>
+            <td><input id="to" type="text" /></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td><button>Submit</button></td>
+          </tr>
+        </table>
+      </td>
+      <td>
+        <div id="map_canvas" style="width:100%; height:100%"></div> 
+      </td>
+    </tr>
+  </table>
 </body> 
 </html>

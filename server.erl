@@ -18,8 +18,8 @@ stop() ->
 loop(Req) ->
   respond(Req:get(path), lists:sort(Req:parse_qs()), Req).
   
-respond("/route", [{"source", Source}, {"target", Target}], Req) ->
-  try requests:route(list_to_atom(Source), list_to_atom(Target)) of
+respond("/route", [{"from", From}, {"to", To}], Req) ->
+  try requests:route(list_to_atom(From), list_to_atom(To)) of
     [{path, Path}, {distance, Distance}, {stats, Stats}] ->
       Coords = nodes_to_coords(Path),
       Res = {[{route, Coords}, {distance, Distance}, {stats, {Stats}}]},
@@ -30,8 +30,8 @@ respond("/route", [{"source", Source}, {"target", Target}], Req) ->
     _:X -> io:format("~p~n", [X])
   end;
   
-respond("/route_description", [{"source", Source}, {"target", Target}], Req) ->
-  try requests:route_description(list_to_atom(Source), list_to_atom(Target)) of
+respond("/route_description", [{"from", From}, {"to", To}], Req) ->
+  try requests:route_description(list_to_atom(From), list_to_atom(To)) of
     Description ->
       FormattedDescription = [{[{location, {node_to_coords(NodeID)}}, Distance, {walk, list_to_binary(Walk)},
         {direction, list_to_binary(Direction)}]} ||

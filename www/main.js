@@ -1,13 +1,15 @@
 function getParameterByName(name) {
   var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
   return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-}
-  
-var source = getParameterByName('source');
-var target = getParameterByName('target');
+};
 
-function initialize() {
-  $.get('route?source=' + source + '&target=' + target, function(json) {
+$(function() {
+  var from = getParameterByName('from');
+  var to = getParameterByName('to');
+  $("#from").val(from);
+  $("#to").val(to);
+  
+  $.get('route?from=' + from + '&to=' + to, function(json) {
     var data = JSON.parse(json);
     var coords = data.route.map(function(each) {
       return new google.maps.LatLng(each.lat, each.lon);
@@ -29,7 +31,7 @@ function initialize() {
       strokeWeight: 2
     });
     
-    $.get('route_description?source=' + source + '&target=' + target, function(routeDescriptionJson) {
+    $.get('route_description?from=' + from + '&to=' + to, function(routeDescriptionJson) {
       var routeDescription = JSON.parse(routeDescriptionJson).description;
       var index = 1;
       routeDescription.forEach(function(each) {
@@ -43,4 +45,4 @@ function initialize() {
       });
     });
   });
-}
+});
