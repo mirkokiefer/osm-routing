@@ -115,8 +115,6 @@ angle(A, B, C) ->
   NormalizedAngle.
   
 % operators on ets data:
-
-
 extract_way_tag(FilterTag, WayID) ->
   case store:lookup_way(WayID) of
     {_, {tags, Tags}, _} ->

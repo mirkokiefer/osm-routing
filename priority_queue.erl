@@ -1,6 +1,9 @@
 -module(priority_queue).
 
--export([add/2, list/1, remove/2, remove_all/2, smallest/1]).
+-export([new/0, add/2, list/1, remove/2, remove_all/2, smallest/1]).
+
+new() ->
+  gb_trees:empty().
 
 add({Element, Value}, Queue) ->
   gb_trees:insert({Value, Element}, null, Queue);

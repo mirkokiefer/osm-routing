@@ -34,8 +34,8 @@ respond("/route_annotated", [{"source", Source}, {"target", Target}], Req) ->
   try requests:route_annotated(list_to_atom(Source), list_to_atom(Target)) of
     [{path, List}, {distance, Distance}, {stats, Stats}] ->
       ExtractNodes = fun(Path) -> [Node || [{node, Node}, {distance, _}] <- Path] end,
-      Coords = [{[{way, list_to_binary(Way)}, {nodes, nodes_to_coords(ExtractNodes(Path))}]} ||
-        [{way, Way}, {nodes, Path}, {angle, _}] <- List],
+      Coords = [{[{way, list_to_binary(Way)}, {nodes, nodes_to_coords(ExtractNodes(Path))}, Angle]} ||
+        [{way, Way}, {nodes, Path}, Angle] <- List],
       Res = {[{route, Coords}, {distance, Distance}, {stats, {Stats}}]},
       {ok, Json} = json:encode(Res),
       Body = io_lib:format("~s", [binary_to_list(Json)]),

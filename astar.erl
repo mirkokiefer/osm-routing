@@ -14,7 +14,7 @@ shortest_path_internal(SourceID, TargetID) ->
   StartT = now(),
   Tab = ets:new(shortest_path, [set, public]),
   VisitedNodes = ets:new(visited_nodes, [set, public]),
-  Q1 = gb_trees:empty(),
+  Q1 = priority_queue:new(),
   
   ets:insert(Tab, {SourceID, {previous, undefined}, {distance, 0}}),
   Path = recurseNodes(SourceID, TargetID, Q1, {Tab, VisitedNodes}),
