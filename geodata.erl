@@ -1,33 +1,6 @@
 -module(geodata).
--export([group_nodes/1, way_distances/1, edges/1, distance/2, nodes_to_coords/1, coords/1]).
+-export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
 
--export([extract_way_tag/2]).
-
-%groups nodes by way names:
-group_nodes(Nodes) ->
-  compute_angles(group_nodes(Nodes, [{way, start}, {nodes, []}], [])).
-  
-group_nodes([First], [{way, Way}, {nodes, Nodes}], List) ->
-  NewGroup = [{way, Way}, {nodes, lists:reverse([First|Nodes])}],
-  [_Undefined | Rest] = lists:reverse([NewGroup|List]),
-  Rest;
-
-group_nodes([First|Rest], [{way, WayName}, {nodes, Nodes}], List) ->
-  [Second|_] = Rest,
-  [{node, FirstNode}, _] = First,
-  [{node, SecondNode}, _] = Second,
-  NewWay = connecting_way(FirstNode, SecondNode),
-  NewWayName = geodata:extract_way_tag("name", NewWay),
-  case NewWayName of
-    WayName -> NewGroup = [{way, WayName}, {nodes, [First|Nodes]}], NewList = List;
-    _ -> NewGroup = [{way, NewWayName}, {nodes, [First]}],
-      NewList = [[{way, WayName},{nodes, lists:reverse(Nodes)}] | List]
-  end,
-  group_nodes(Rest, NewGroup, NewList).
-
-way_distances(GroupedNodes) ->
-  calculate_way_distances(GroupedNodes, []).
-  
 edges(NodeID) ->
   WayIds = store:node2ways(NodeID),
   Ways = lists:map(fun(WayID) -> WayLookup = store:lookup_way(WayID),
@@ -55,44 +28,44 @@ coords(Node) ->
   {LonFloat, _} = string:to_float(LonString),
   {LatFloat, LonFloat}.
   
+path_angles(Path) ->
+  Angles = lists:reverse(path_angles_recursive(Path, [])),
+  [First|_] = Path,
+  [lists:append(First, [{angle, 0}]) | Angles].
+
+path_angles_recursive([_SecondLast, Last], List) ->
+  [lists:append(Last, [{angle, 0}]) | List];
+
+path_angles_recursive([Previous, Current, Next | Rest], List) ->
+  [PreviousID, CurrentID, NextID] = [PreviousID || [{node, PreviousID}, _] <- [Previous, Current, Next]],
+  NewCurrent = lists:append(Current, [{angle, angle(PreviousID, CurrentID, NextID)}]),
+  NewList = [NewCurrent | List],
+  path_angles_recursive([Current, Next | Rest], NewList).
+  
+connecting_way(NodeA, NodeB) ->
+  WaysA = store:node2ways(NodeA),
+  WaysB = store:node2ways(NodeB),
+  case utils:intersection(WaysA, WaysB) of
+    [] -> undefined;
+    [Way] -> Way;
+    [First|_] -> First
+  end.
+  
+extract_way_tag(FilterTag, WayID) ->
+  case store:lookup_way(WayID) of
+    {_, {tags, Tags}, _} ->
+      case [Value || {Tag, Value} <- Tags, Tag == FilterTag] of
+        [First|_] -> First;
+        [] -> undefined
+      end;
+    undefined -> undefined
+  end.
+  
+nodeid_to_coords(NodeID) ->
+  coords(store:lookup_node(NodeID)).
+
 nodes_to_coords(List) ->
   [coords(store:lookup_node(Node)) || Node <- List].
-
-calculate_way_distances([[{way, Way}, {nodes, Nodes}, {angle, Angle}]], Output) ->
-  NewOutput = case Nodes of
-    [_SingleNode] -> [[{way, Way}, {distance, 0}, {angle, Angle}]|Output];
-    [[_, {distance, FirstD}]|Rest] -> [_, {distance, LastD}] = lists:last(Rest),
-      [[{way, Way}, {distance, LastD-FirstD}, {angle, Angle}]|Output]
-  end,
-  lists:reverse(NewOutput);
-
-calculate_way_distances([[{way, Way}, {nodes, Nodes}, {angle, Angle}]|Rest], Output) ->
-  [[_, {nodes, NextNodes}, _]|_]=Rest,
-  [[_, {distance, FirstD}]|_] = Nodes,
-  [[_, {distance, NextFirstD}]|_] = NextNodes,
-  Distance = NextFirstD-FirstD,
-  NewOutput = [[{way, Way}, {distance, Distance}, {angle, Angle}]|Output],
-  calculate_way_distances(Rest, NewOutput).
-  
-compute_angles(GroupedNodes) ->
-  compute_angles(GroupedNodes, []).
-
-compute_angles([_First], List) ->
-  lists:reverse(List);
-  
-compute_angles([[_, {nodes, FirstNodes}]|Rest], List) ->
-  A = lists:last(FirstNodes),
-  [[{way, SecondWay}, {nodes, SecondNodes}]|NewRest] = Rest,
-  case SecondNodes of
-    [B,C|_] -> ok;
-    [B] -> [[_, {nodes, [C|_]}] | _]=NewRest
-  end,
-  [{node, NodeA}, _] = A,
-  [{node, NodeB}, _] = B,
-  [{node, NodeC}, _] = C,
-  Angle = angle(NodeA, NodeB, NodeC),
-  NewList = [[{way, SecondWay}, {nodes, SecondNodes}, {angle, Angle}]|List],
-  compute_angles(Rest, NewList).
 
 bearing(NodeAID, NodeBID) ->
   {ALatDeg, ALonDeg} = coords(store:lookup_node(NodeAID)),
@@ -113,17 +86,6 @@ angle(A, B, C) ->
     false -> Angle
   end,
   NormalizedAngle.
-  
-% operators on ets data:
-extract_way_tag(FilterTag, WayID) ->
-  case store:lookup_way(WayID) of
-    {_, {tags, Tags}, _} ->
-      case [Value || {Tag, Value} <- Tags, Tag == FilterTag] of
-        [First|_] -> First;
-        [] -> undefined
-      end;
-    undefined -> undefined
-  end.
 
 % helper functions
 neighbours(Element, List) ->
@@ -144,12 +106,3 @@ neighbours(Element, Last, List) ->
     [First | Rest] -> Result = neighbours(Element, First, Rest)
   end,
   Result.
-  
-connecting_way(NodeA, NodeB) ->
-  WaysA = store:node2ways(NodeA),
-  WaysB = store:node2ways(NodeB),
-  case utils:intersection(WaysA, WaysB) of
-    [] -> undefined;
-    [Way] -> Way;
-    [First|_] -> First
-  end.
