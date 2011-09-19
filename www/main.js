@@ -29,15 +29,18 @@ function initialize() {
       strokeWeight: 2
     });
     
-    var index = 1;
-    /*markerCoords.forEach(function(coord) {
-      var options = {
-        position: coord,
-        map: map,
-        title: index.toString()
-      };
-      new google.maps.Marker(options);
-      index++;
-    });*/
+    $.get('route_description?source=' + source + '&target=' + target, function(routeDescriptionJson) {
+      var routeDescription = JSON.parse(routeDescriptionJson).description;
+      var index = 1;
+      routeDescription.forEach(function(each) {
+        var options = {
+          position: new google.maps.LatLng(each.location.lat, each.location.lon),
+          map: map,
+          title: index.toString()
+        };
+        new google.maps.Marker(options);
+        index++;
+      });
+    });
   });
 }
