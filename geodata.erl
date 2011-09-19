@@ -1,7 +1,5 @@
 -module(geodata).
--export([group_nodes/1, way_distances/1, edges/1, distance/2, nodes_to_coords/1, coords/1]).
-
--export([extract_way_tag/2]).
+-export([group_nodes/1, way_distances/1, edges/1, distance/2, nodes_to_coords/1, coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
 
 %groups nodes by way names:
 group_nodes(Nodes) ->
@@ -54,6 +52,21 @@ coords(Node) ->
   {LatFloat, _} = string:to_float(LatString),
   {LonFloat, _} = string:to_float(LonString),
   {LatFloat, LonFloat}.
+  
+path_angles(Path) ->
+  Angles = lists:reverse(path_angles_recursive(Path, [])),
+  [First|_] = Path,
+  [lists:append(First, [{angle, 0}]) | Angles].
+
+path_angles_recursive([SecondLast, Last], List) ->
+  [lists:append(Last, [{angle, 0}]) | List];
+
+path_angles_recursive([Previous, Current, Next | Rest], List) ->
+  [Node, Distance] = Current,
+  [PreviousID, CurrentID, NextID] = [PreviousID || [{node, PreviousID}, _] <- [Previous, Current, Next]],
+  NewCurrent = lists:append(Current, [{angle, angle(PreviousID, CurrentID, NextID)}]),
+  NewList = [NewCurrent | List],
+  path_angles_recursive([Current, Next | Rest], NewList).
   
 nodes_to_coords(List) ->
   [coords(store:lookup_node(Node)) || Node <- List].

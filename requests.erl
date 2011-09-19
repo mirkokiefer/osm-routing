@@ -9,23 +9,30 @@ route_annotated(SourceID, TargetID) ->
   [{path, geodata:group_nodes(Nodes)}, D, S].
   
 route_description(SourceID, TargetID) ->
-  [{path, Path}, D, _S] = route_annotated(SourceID, TargetID),
-  NewPath = geodata:way_distances(Path),
-  Description = route_description_recursive(NewPath, []).
+  [{path, Path}, D, _S] = astar:shortest_path_with_distances(SourceID, TargetID),
+  PathWithAngles = geodata:path_angles(Path),
+  io:format("~p~n", [PathWithAngles]),
+  route_description_recursive(PathWithAngles, {undefined, 0}, []).
   
-route_description_recursive([], Output) ->
-  [First|Directions] = lists:reverse(Output),
-  [{way, FirstWay}, {distance, FirstDistance}, _, FirstWalk] = First,
-  NewFirst = [{way, FirstWay}, {distance, FirstDistance},
-    {direction, string:join([textual_direction(start), FirstWay], "")}, FirstWalk],
-  NewPath = [NewFirst | Directions],
-  NewPath;
+route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}]], {PreviousWay, PreviousDistance}, Output) ->
+  NewOutput = [[{node, Node}, {distance, Distance}, {angle, Angle}, {direction, none},
+    {walk, at_destination(Distance-PreviousDistance)}]|Output],
+  Directions = lists:reverse(NewOutput),
+  Directions;
   
-route_description_recursive([[{way, Way}, {distance, Distance}, {angle, Angle}]|Rest], Output) ->
-  Direction = string:join([textual_direction(angle_to_direction(Angle)), textual_direction(into), Way], ""),
-  ResolvedDirection = [[{way, Way}, {distance, Distance}, {direction, Direction},
-    {walk, distance_to_textual_direction(Distance)}]|Output],
-  route_description_recursive(Rest, ResolvedDirection).
+route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}], Next|Rest], {PreviousWay, PreviousDistance}, Output) ->
+  [{node, NextNode}, _, _] = Next,
+  Way = geodata:extract_way_tag("name", geodata:connecting_way(Node, NextNode)),
+  LogicalDirection = angle_to_direction(Angle),
+  {NewOutput, NewPreviousDistance} = case {Way, LogicalDirection} of
+    {PreviousWay, straight} -> {Output, PreviousDistance};
+    Any -> RelativeDistance = Distance - PreviousDistance,
+      Walk = distance_to_textual_direction(RelativeDistance),
+      Direction = string:join([textual_direction(LogicalDirection), textual_direction(into), Way], ""),
+      NewOutput1 = [[{node, Node}, {distance, Distance}, {angle, Angle}, {walk, Walk}, {direction, Direction}]|Output],
+      {NewOutput1, Distance}
+  end,
+  route_description_recursive([Next|Rest], {Way, NewPreviousDistance}, NewOutput).
   
 angle_to_direction(Angle) ->
   if
@@ -37,9 +44,13 @@ angle_to_direction(Angle) ->
 distance_to_textual_direction(Distance) ->
   string:join([textual_direction(follow), utils:float_to_string(Distance), textual_direction(unit)], "").
   
+at_destination(Distance) ->
+  string:join([textual_direction(destination), utils:float_to_string(Distance), textual_direction(unit)], "").
+  
 textual_direction(Direction) ->
   case Direction of
     start -> "Sie starten in ";
+    destination -> "Sie haben Ihr Ziel erreicht in ";
     straight -> "Gehen Sie geradeaus ";
     left -> "Biegen Sie nach links ab ";
     right -> "Biegen Sie nach rechts ab ";
