@@ -48,8 +48,8 @@ at_destination(Distance) ->
 join(List) ->
   string:join(List, "").
   
-keyword(text) ->
-  join(["<strong>", text, "</strong>"]).
+keyword(Text) ->
+  join_string(["<strong>", Text, "</strong>"]).
 
 textual_direction(Direction) ->
   case Direction of
