@@ -14,6 +14,6 @@ lookup_way(WayID) ->
   
 lookup_node(NodeID) ->
   case ets:lookup(osm_nodes, NodeID) of
-    [Node={Id, {lat, Lat}, {lon ,Lon}, {tags, Tags}}] -> Node;
+    [Node={Id, {lat, Lat}, {lon ,Lon}, {tags, Tags}}] -> #node{id=Id, lat=Lat, lon=Lon, tags=Tags};
     [] -> undefined
   end.

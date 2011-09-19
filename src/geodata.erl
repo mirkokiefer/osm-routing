@@ -1,6 +1,8 @@
 -module(geodata).
 -export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
 
+-include("routing.hrl").
+
 edges(NodeID) ->
   WayIds = store:node2ways(NodeID),
   Ways = lists:map(fun(WayID) -> WayLookup = store:lookup_way(WayID),
@@ -83,9 +85,8 @@ angle(A, B, C) ->
 
 % helper functions
 coords(Node) ->
-  {_, {lat, LatString}, {lon, LonString}, _} = Node,
-  {LatFloat, _} = string:to_float(LatString),
-  {LonFloat, _} = string:to_float(LonString),
+  {LatFloat, _} = string:to_float(Node#node.lat),
+  {LonFloat, _} = string:to_float(Node#node.lon),
   {LatFloat, LonFloat}.
 
 neighbours(Element, List) ->
