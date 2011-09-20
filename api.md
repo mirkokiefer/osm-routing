@@ -1,6 +1,6 @@
 # Erlang Modules
 
-## aster
+## astar
 ### shortest_path/2
 ### shortest_path_with_distances/2
 
