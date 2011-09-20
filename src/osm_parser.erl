@@ -1,12 +1,13 @@
--module(parsing).
--export([run/0]).
+-module(osm_parser).
+-export([read/1]).
 
-
-run() ->
-  {ok, Xml} = file:read_file("../data/heidelberg_mannheim.osm"),
+% osm_parser:read("../data/heidelberg_mannheim.osm").
+read(File) ->
+  {ok, Xml} = file:read_file(File),
   ets:new(osm_nodes, [named_table, set, public]),
   ets:new(osm_ways, [named_table, set, public]),
   erlsom:parse_sax(Xml, [], fun event/2),
+  filelib:ensure_dir("../output/"),
   ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
   ets:tab2file(osm_ways, "../output/osm_ways.tab").
 

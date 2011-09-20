@@ -2,6 +2,8 @@
 
 -export([setup/0, test/2, test_all/0, test_short/0]).
 
+% first compile:
+% erlc -o ./src -I ./src/*.erl
 setup() ->
   processing:loadData(),
   _Http = server:start().
