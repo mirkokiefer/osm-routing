@@ -34,9 +34,9 @@ respond("/route_description", [{"from", From}, {"to", To}], Req) ->
   try requests:route_description(list_to_atom(From), list_to_atom(To)) of
     Description ->
       io:format("~p~n", [Description]),
-      FormattedDescription = [{[{location, {node_to_coords(NodeID)}}, Distance, {walk, list_to_binary(Walk)},
+      FormattedDescription = [{[{location, {node_to_coords(NodeID)}}, Distance, Angle, {walk, list_to_binary(Walk)},
         {direction, list_to_binary(Direction)}]} ||
-        [{node, NodeID}, Distance, _Angle, {walk, Walk}, {direction, Direction}] <- Description],
+        [{node, NodeID}, Distance, Angle, {walk, Walk}, {direction, Direction}] <- Description],
       NewFDesc = {[{description, FormattedDescription}]},
       {ok, Json} = json:encode(NewFDesc),
       Body = io_lib:format("~s", [binary_to_list(Json)]),
