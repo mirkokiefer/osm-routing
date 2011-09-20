@@ -55,7 +55,7 @@ textual_direction(Direction) ->
   case Direction of
     start -> "Sie starten in ";
     destination -> "Sie haben Ihr Ziel erreicht in ";
-    straight -> join_string(["Gehen Sie ", keyword("geradeaus")]);
+    straight -> join_string(["Gehen Sie ", keyword("geradeaus"), " "]);
     left -> join_string(["Biegen Sie nach ", keyword("links"), " ab "]);
     right -> join_string(["Biegen Sie nach ", keyword("rechts"), " ab "]);
     into -> "in ";

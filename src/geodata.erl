@@ -33,7 +33,7 @@ path_angles_recursive([_SecondLast, Last], List) ->
   [lists:append(Last, [{angle, 0}]) | List];
 
 path_angles_recursive([Previous, Current, Next | Rest], List) ->
-  [PreviousID, CurrentID, NextID] = [PreviousID || [{node, PreviousID}, _] <- [Previous, Current, Next]],
+  [PreviousID, CurrentID, NextID] = [ID || [{node, ID}, _] <- [Previous, Current, Next]],
   NewCurrent = lists:append(Current, [{angle, angle(PreviousID, CurrentID, NextID)}]),
   NewList = [NewCurrent | List],
   path_angles_recursive([Current, Next | Rest], NewList).

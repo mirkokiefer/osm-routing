@@ -51,7 +51,6 @@ event({startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs}) ->
   NewState;
 
 event({endElement, _, "way", _}, State) ->
-  %io:format("end way: ~p~n", [State]),
   {{id, ID}, Tags, Refs} = State,
   case lists:any(fun({K, _V})-> K == "name" end, Tags) of
     true -> ets:insert(osm_ways, {ID, {tags, Tags}, {refs, Refs}});
