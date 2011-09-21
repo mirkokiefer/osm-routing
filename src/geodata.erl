@@ -1,7 +1,7 @@
 -module(geodata).
 -export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, way_tag/2]).
 
--include("routing.hrl").
+-include("../includes/routing.hrl").
 
 edges(NodeID) ->
   WayIds = store:node2ways(NodeID),
