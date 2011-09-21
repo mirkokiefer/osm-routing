@@ -46,3 +46,18 @@
 ### deg2rad/1
 ### rad2deg/1
 ### intersection/2
+
+# HTTP APIs
+
+##Route
+http://domain:port/route?from=StartID&to=DestinationID
+Outputs a JSON formatted list of Node IDs for the computed route.
+
+##Route description
+http://domain:port/route_description?from=StartID&to=DestinationID
+Outputs a JSON formatted route description including meta-data of the route.
+
+##User Interface
+http://domain:port/map?from=StartID&to=DestinationID
+
+Displays a map and an interface to enter two node IDs. On submit a path and a route description is displayed.
