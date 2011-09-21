@@ -15,11 +15,11 @@
     $ make install
 
 
-## Erlang json lib
+## Erlsom
 
 ### Download
-	$ git clone https://github.com/davisp/eep0018.git
-	$ cd eep0018
+	$ git clone https://github.com/willemdj/erlsom.git
+	$ cd erlsom
 
 ### Build
 	$ make
