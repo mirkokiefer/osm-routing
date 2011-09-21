@@ -13,7 +13,7 @@ start() ->
   Http.
 
 stop() ->
-  mochiweb_http:stop().
+  mochiweb_http:stop(http_2904).
 
 loop(Req) ->
   respond(Req:get(path), lists:sort(Req:parse_qs()), Req).
@@ -35,9 +35,7 @@ respond("/route_description", [{"from", From}, {"to", To}], Req) ->
       FormattedDescription = [{struct, [{location, node_to_coords(NodeID)}, Distance, {walk, encode(Walk)}, {direction, encode(Direction)}]} ||
         [{node, NodeID}, Distance, _Angle, {walk, Walk}, {direction, Direction}] <- Description],
       NewFDesc = {struct, [{description, FormattedDescription}]},
-      io:format("~p~n", [NewFDesc]),
       Json = mochijson2:encode(NewFDesc),
-      io:format("~p~n", [Json]),
       Req:ok({"text/plain;charset=utf-8", Json})
   catch
     _:X -> io:format("~p~n", [X])
