@@ -5,8 +5,8 @@
 
 edges(NodeID) ->
   WayIds = store:node2ways(NodeID),
-  Ways = lists:map(fun(WayID) -> WayLookup = store:lookup_way(WayID),
-    {_, _, {refs, WayDetails}} = WayLookup, WayDetails end, WayIds),
+  Ways = lists:map(fun(WayID) -> #way{refs=Refs} = store:lookup_way(WayID),
+    Refs end, WayIds),
   Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(NodeID, Refs) end, Ways)),
   NeighboursDetails = [{{node, Neighbour}, {distance, distance(NodeID, Neighbour)}} ||
     Neighbour <- Neighbours, store:lookup_node(Neighbour) =/= undefined],
@@ -49,12 +49,12 @@ connecting_way(NodeA, NodeB) ->
   
 extract_way_tag(FilterTag, WayID) ->
   case store:lookup_way(WayID) of
-    {_, {tags, Tags}, _} ->
+    undefined -> undefined;
+    #way{tags=Tags} ->
       case [Value || {Tag, Value} <- Tags, Tag == FilterTag] of
         [First|_] -> First;
         [] -> undefined
-      end;
-    undefined -> undefined
+      end
   end.
   
 nodeid_to_coords(NodeID) ->

@@ -8,7 +8,7 @@ node2ways(NodeID) ->
   
 lookup_way(WayID) ->
   case ets:lookup(osm_ways, WayID) of
-    [Way] -> Way;
+    [{Id, {tags, Tags}, {refs, Refs}}] -> #way{id=Id, tags=Tags, refs=Refs};
     _ -> undefined
   end.
   
