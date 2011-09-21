@@ -55,8 +55,10 @@ var displayEmptyMap = function() {
 };
 
 var displayRouteDescription = function(data) {
+  var index = 0;
   var text = data.map(function(each) {
-    return each.walk + '<br><br>' + each.direction + '<br>';
+    index++;
+    return each.walk + '<br><br>' + new String(index) + ': ' + each.direction + '<br>';
   });
   $('#directions').html(text.join(''));
 };
