@@ -9,7 +9,8 @@ read(File) ->
   erlsom:parse_sax(Xml, [], fun event/2),
   filelib:ensure_dir("../output/"),
   ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
-  ets:tab2file(osm_ways, "../output/osm_ways.tab").
+  ets:tab2file(osm_ways, "../output/osm_ways.tab"),
+  delete_tabs().
 
 parseAttributes(Attributes) ->
   [{Attr, Value} || {_, Attr, _, _, Value} <- Attributes].
@@ -61,3 +62,7 @@ event({endElement, _, "way", _}, State) ->
 %% Catch-all. Pass state on as-is
 event(_Event, State) ->
   State.
+  
+delete_tabs() ->
+  ets:delete(osm_nodes),
+  ets:delete(osm_ways).
