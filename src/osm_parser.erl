@@ -10,7 +10,8 @@ read(File) ->
   filelib:ensure_dir("../output/"),
   ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
   ets:tab2file(osm_ways, "../output/osm_ways.tab"),
-  delete_tabs().
+  delete_tabs(),
+  success.
 
 parseAttributes(Attributes) ->
   [{Attr, Value} || {_, Attr, _, _, Value} <- Attributes].

@@ -11,7 +11,7 @@
 ### nodes_to_coords/1
 ### path_angles/1
 ### connecting_way/2
-### extract_way_tag/2
+### way_tag/2
 
 ## osm_parser
 ### read/1

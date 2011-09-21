@@ -17,7 +17,7 @@ route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}
   
 route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}], Next|Rest], {PreviousWay, PreviousDistance}, Output) ->
   [{node, NextNode}, _, _] = Next,
-  Way = geodata:extract_way_tag("name", geodata:connecting_way(Node, NextNode)),
+  Way = geodata:way_tag("name", geodata:connecting_way(Node, NextNode)),
   LogicalDirection = angle_to_direction(Angle),
   {NewOutput, NewPreviousDistance} = case {Way, LogicalDirection} of
     {PreviousWay, straight} -> {Output, PreviousDistance};

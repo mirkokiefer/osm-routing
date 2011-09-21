@@ -1,5 +1,5 @@
 -module(geodata).
--export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, extract_way_tag/2]).
+-export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, way_tag/2]).
 
 -include("routing.hrl").
 
@@ -47,7 +47,7 @@ connecting_way(NodeA, NodeB) ->
     [First|_] -> First
   end.
   
-extract_way_tag(FilterTag, WayID) ->
+way_tag(FilterTag, WayID) ->
   case store:lookup_way(WayID) of
     undefined -> undefined;
     #way{tags=Tags} ->
