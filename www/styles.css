@@ -10,7 +10,12 @@ body {
 
 #left-col {
   width: 300px;
+}
+
+#left-panel {
   padding: 20px;
+  height:100%;
+  overflow: auto;
 }
 
 #main-table {
@@ -18,10 +23,6 @@ body {
   height:100%;
 }
 
-#form {
-  margin-top: 50px;
-}
-
 #directions {
-
+  
 }
