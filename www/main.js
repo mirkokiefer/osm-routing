@@ -29,7 +29,6 @@ var displayMap = function(from, to) {
     $.get('route_description?from=' + from + '&to=' + to, function(routeDescriptionJson) {
       var routeDescription = JSON.parse(routeDescriptionJson).description;
       var index = 1;
-      displayRouteDescription(routeDescription);
       routeDescription.forEach(function(each) {
         var options = {
           position: new google.maps.LatLng(each.location.lat, each.location.lon),
@@ -39,6 +38,7 @@ var displayMap = function(from, to) {
         new google.maps.Marker(options);
         index++;
       });
+      displayRouteDescription(routeDescription);
     });
   });
 };
