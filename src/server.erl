@@ -41,6 +41,9 @@ respond("/route_description", [{"from", From}, {"to", To}], Req) ->
     _:X -> io:format("~p~n", [X])
   end;
   
+respond("/map", _Params, Req) ->
+  Req:serve_file("ui.html", filename:absname("../www"));
+  
 respond(Path, _Params, Req) ->
   FileName = lists:nthtail(1, Path),
   Req:serve_file(FileName, filename:absname("../www")).
