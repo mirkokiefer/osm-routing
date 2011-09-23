@@ -1,9 +1,9 @@
 -module(geodata).
--export([edges/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, way_tag/2]).
+-export([neighbours/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, way_tag/2]).
 
 -include("../includes/routing.hrl").
 
-edges(NodeID) ->
+neighbours(NodeID) ->
   WayIds = store:node2ways(NodeID),
   Ways = lists:map(fun(WayID) -> #way{refs=Refs} = store:lookup_way(WayID),
     Refs end, WayIds),
