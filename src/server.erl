@@ -41,21 +41,6 @@ respond("/route_description", [{"from", From}, {"to", To}], Req) ->
     _:X -> io:format("~p~n", [X])
   end;
   
-respond("/json", _, Req) ->
-  Req:ok({"text/plain;charset=utf-8", mochijson2:encode(
-    {struct, [
-      {<<"bla">>, 2.3445432489034598053094539089085555},
-      {<<"blub">>, {struct,
-        [{asdf, encode("<adfsdlü>")}]
-      }}
-    ]})});
-    
-respond("/unicode", _, Req) ->
-  Req:ok({"text/plain;charset=utf-8", io_lib:format("~ts", ["adfsdlü"])});
-
-respond("/map", _Params, Req) ->
-  Req:serve_file("ui.html", filename:absname("../www"));
-
 respond(Path, _Params, Req) ->
   FileName = lists:nthtail(1, Path),
   Req:serve_file(FileName, filename:absname("../www")).
