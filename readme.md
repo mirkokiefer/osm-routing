@@ -57,5 +57,5 @@ Create an App folder and cd into it.
 ## Start Server
 	$ routing:start().
 
-## Start Server
+## Stop Server
 	$ routing:stop().
