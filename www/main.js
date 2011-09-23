@@ -56,10 +56,12 @@ var displayEmptyMap = function() {
 
 var displayRouteDescription = function(data) {
   var index = 0;
+  var last = data.pop();
   var text = data.map(function(each) {
     index++;
     return each.walk + '<br><br>' + new String(index) + ': ' + each.direction + '<br>';
   });
+  text.push(last.walk);
   $('#directions').html(text.join(''));
 };
 
