@@ -1,3 +1,10 @@
+
+% Database processing
+%
+% Author: Mirko Kiefer
+%
+% This module is called once on startup to load all database files and builds an additional database mapping nodes to ways. 
+
 -module(processing).
 -export([loadData/0]).
 

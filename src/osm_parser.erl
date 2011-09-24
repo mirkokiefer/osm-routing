@@ -1,7 +1,13 @@
+
+% OSM Parser and DB generator
+%
+% Author: Mirko Kiefer
+%
+% This module is able to parse an .osm file and writes it out as a serialized ets database file.
+
 -module(osm_parser).
 -export([read/1]).
 
-% osm_parser:read("../data/heidelberg_mannheim.osm").
 read(File) ->
   {ok, Xml} = file:read_file(File),
   ets:new(osm_nodes, [named_table, set, public]),

@@ -1,3 +1,11 @@
+/*
+  UI logic
+  
+  Author: Johannes Auer, Haykuhi Jaghinyan
+  
+  Accessing the backend through HTTP requests, drawing the map and route using Google Maps, displaying the route description.
+*/
+
 var getParameterByName = function(name) {
   var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
   return match && decodeURIComponent(match[1].replace(/\+/g, ' '));

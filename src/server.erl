@@ -1,3 +1,11 @@
+
+% HTTP Server
+%
+% Author: Mirko Kiefer
+%
+% The implementation of the HTTP server required to interface the system through an HTTP API.
+% This module should only implement the server logic and JSON serialization.
+
 -module(server).
 
 -export([start/0, stop/0, loop/1]).

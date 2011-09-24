@@ -1,3 +1,10 @@
+
+% Priority queue
+%
+% Author: Mirko Kiefer
+%
+% This module provides a simple wrapper around erlang's gb_tree module to simplify usage as an efficient priority queue.
+
 -module(priority_queue).
 
 -export([new/0, add/2, list/1, remove/2, remove_all/2, smallest/1]).

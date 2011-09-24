@@ -1,3 +1,10 @@
+
+% API requests
+%
+% Author: Mirko Kiefer
+%
+% This module is called by the server and implements the API - mainly the translation of route data to textual directions. 
+
 -module(requests).
 -export([route/2, route_description/2]).
 

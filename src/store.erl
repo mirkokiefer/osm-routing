@@ -1,3 +1,10 @@
+
+% Store
+%
+% Author: Mirko Kiefer
+%
+% The interface to the ets tables storing node and way data. The ets tables should always be accessed through this module.
+
 -module(store).
 -export([node2wayids/1, lookup_way/1, lookup_node/1]).
 -include("../includes/routing.hrl").

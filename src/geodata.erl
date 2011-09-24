@@ -1,3 +1,11 @@
+
+% Store interface
+%
+% Author: Mirko Kiefer
+%
+% This module provides an intermediate interface between the store module and the rest of the system.
+% Any high-level request required in the system should be implemented here.
+
 -module(geodata).
 -export([neighbours/1, distance/2, nodeid_to_coords/1, nodes_to_coords/1, path_angles/1, connecting_way/2, way_tag/2]).
 

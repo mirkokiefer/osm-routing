@@ -1,3 +1,12 @@
+
+% A*-Algorithm
+%
+% Author: Mirko Kiefer, Haykuhi Jaghinyan
+%
+% This module implements A* to find the shortest path between two nodes
+% It makes use of the geodata module for accessing data.
+% The priority queue used by the algorithm is implemented in the priority_queue module.
+
 -module(astar).
 -export([shortest_path/2, shortest_path_with_distances/2]).
 
@@ -65,13 +74,13 @@ recurse_neighbours([Neighbour|Rest], CurrentNode, CurrentDistance, Target, State
   OldDistance = get_distance(Node, State#state.tab),
   NotVisited = not_visited(Node, State#state.visited_nodes),
   NewQueue = if (NewDistance < OldDistance) and NotVisited ->
-    updateDistance(Node, CurrentNode, OldDistance, NewDistance, Target, State);
+    update_distance(Node, CurrentNode, OldDistance, NewDistance, Target, State);
     true -> State#state.queue
   end,
   recurse_neighbours(Rest, CurrentNode, CurrentDistance, Target, State#state{queue=NewQueue}).
 
 % returns an updated version of the priority queue
-updateDistance(Node, PreviousNode, OldDistance, NewDistance, Target, State) ->
+update_distance(Node, PreviousNode, OldDistance, NewDistance, Target, State) ->
   Q1 = priority_queue:remove({Node, add_heuristic(OldDistance, Node, Target)}, State#state.queue),
   Q2 = priority_queue:add({Node, add_heuristic(NewDistance, Node, Target)}, Q1),
   ets:insert(State#state.tab, {Node, {previous, PreviousNode}, {distance, NewDistance}}),
