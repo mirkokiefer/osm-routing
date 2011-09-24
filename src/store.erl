@@ -1,8 +1,8 @@
 -module(store).
--export([node2ways/1, lookup_way/1, lookup_node/1]).
+-export([node2wayids/1, lookup_way/1, lookup_node/1]).
 -include("../includes/routing.hrl").
 
-node2ways(NodeID) ->
+node2wayids(NodeID) ->
   Result = ets:lookup(osm_nodes_to_ways, NodeID),
   [Way || {_Node, Way} <- Result].
   

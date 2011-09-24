@@ -4,7 +4,7 @@
 -include("../includes/routing.hrl").
 
 neighbours(NodeID) ->
-  WayIds = store:node2ways(NodeID),
+  WayIds = store:node2wayids(NodeID),
   Ways = lists:map(fun(WayID) -> #way{refs=Refs} = store:lookup_way(WayID),
     Refs end, WayIds),
   Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(NodeID, Refs) end, Ways)),
@@ -39,8 +39,8 @@ path_angles_recursive([Previous, Current, Next | Rest], List) ->
   path_angles_recursive([Current, Next | Rest], NewList).
   
 connecting_way(NodeA, NodeB) ->
-  WaysA = store:node2ways(NodeA),
-  WaysB = store:node2ways(NodeB),
+  WaysA = store:node2wayids(NodeA),
+  WaysB = store:node2wayids(NodeB),
   case utils:intersection(WaysA, WaysB) of
     [] -> undefined;
     [Way] -> Way;
