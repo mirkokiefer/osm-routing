@@ -22,9 +22,9 @@ loop(Req) ->
   
 respond("/route", [{"from", From}, {"to", To}], Req) ->
   try requests:route(list_to_atom(From), list_to_atom(To)) of
-    #route{path=Path, distance=Distance, stats=Stats} ->
+    #route{path=Path, distance=Distance, time=Time} ->
       Coords = nodes_to_coords(Path),
-      Res = {struct, [{route, Coords}, {distance, Distance}, {stats, {struct, Stats}}]},
+      Res = {struct, [{route, Coords}, {distance, Distance}, {time, Time}]},
       Json = mochijson2:encode(Res),
       Req:ok({"text/plain;charset=utf-8", Json})
   catch

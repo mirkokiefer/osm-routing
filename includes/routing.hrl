@@ -15,5 +15,8 @@
 -record(route, {
   path,
   distance,
-  stats
+  time,
+  nodes,
+  visited_nodes,
+  memory
 }).
