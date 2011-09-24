@@ -1,14 +1,16 @@
 -module(astar).
 -export([shortest_path/2, shortest_path_with_distances/2]).
 
+-include("../includes/routing.hrl").
+
 shortest_path(SourceID, TargetID) ->
-  [{path, Path}, Distance, Stats, _Tab] = shortest_path_internal(SourceID, TargetID),
-  [{path, Path}, Distance, Stats].
+  [{path, Path}, {distance, Distance}, {stats, Stats}, _Tab] = shortest_path_internal(SourceID, TargetID),
+  #route{path=Path, distance=Distance, stats=Stats}.
 
 shortest_path_with_distances(SourceID, TargetID) ->
-  [{path, Path}, Distance, Stats, Tab] = shortest_path_internal(SourceID, TargetID),
+  [{path, Path}, {distance, Distance}, {stats, Stats}, Tab] = shortest_path_internal(SourceID, TargetID),
   NewPath = [[{node, Node}, {distance, getDistance(Node, Tab)}] || Node <- Path],
-  [{path, NewPath}, Distance, Stats].
+  #route{path=NewPath, distance=Distance, stats=Stats}.
 
 shortest_path_internal(SourceID, TargetID) ->
   StartT = now(),

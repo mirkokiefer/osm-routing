@@ -11,3 +11,9 @@
   tags,
   refs
 }).
+
+-record(route, {
+  path,
+  distance,
+  stats
+}).

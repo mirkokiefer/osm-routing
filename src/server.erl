@@ -2,6 +2,8 @@
 
 -export([start/0, stop/0, loop/1]).
 
+-include("../includes/routing.hrl").
+
 -define(HTTP_OPTS, [
             {loop, {?MODULE, loop}},
             {port, 2904},
@@ -20,7 +22,7 @@ loop(Req) ->
   
 respond("/route", [{"from", From}, {"to", To}], Req) ->
   try requests:route(list_to_atom(From), list_to_atom(To)) of
-    [{path, Path}, {distance, Distance}, {stats, Stats}] ->
+    #route{path=Path, distance=Distance, stats=Stats} ->
       Coords = nodes_to_coords(Path),
       Res = {struct, [{route, Coords}, {distance, Distance}, {stats, {struct, Stats}}]},
       Json = mochijson2:encode(Res),

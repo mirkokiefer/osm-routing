@@ -1,11 +1,13 @@
 -module(requests).
 -export([route/2, route_description/2]).
 
+-include("../includes/routing.hrl").
+
 route(SourceID, TargetID) ->
   astar:shortest_path(SourceID, TargetID).
 
 route_description(SourceID, TargetID) ->
-  [{path, Path}, _D, _S] = astar:shortest_path_with_distances(SourceID, TargetID),
+  #route{path=Path} = astar:shortest_path_with_distances(SourceID, TargetID),
   PathWithAngles = geodata:path_angles(Path),
   route_description_recursive(PathWithAngles, {undefined, 0}, []).
   
