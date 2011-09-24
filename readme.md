@@ -1,39 +1,47 @@
-# Installation
+# OSM Routing
+An Erlang geo-routing system based on OpenStreetMap data providing a HTTP-API.
 
-## Erlang
-### Download
+## Authors
+- [Mirko Kiefer](https://github.com/mirkok) (mail@mirkokiefer.com)
+- [Haykuhi Jaghinyan](mailto:haikuhi290489@aol.com)
+- [Johannes Auer](https://github.com/johannesauer)
+
+## Installation
+Get the current source from https://github.com/livelycode/routing.
+### Erlang
+#### Download
 1. Download Erlang/OTP R14B03 at http://www.erlang.org/download.html.
 2. Unpack the download.
 3. Now cd into the base dir.
-### Build
+#### Build
     $ ./configure
     $ make
-### Install
+#### Install
     $ make install
 
-## Erlsom
-### Download
+### Erlsom
+#### Download
 	$ git clone https://github.com/willemdj/erlsom.git
-### Build
+#### Build
 	$ cd erlsom
 	$ make
-### Install
+#### Install
 Move folder to erlang path.
 
-## MochiWeb
-### Download
+### MochiWeb
+#### Download
 	$ git clone https://github.com/mochi/mochiweb.git
-### Build
+#### Build
 	$ cd mochiweb
 	$ make
-### Install
+#### Install
 Move folder to erlang path.
 
-## OSM Routing
+### OSM Routing
 Create an App folder and cd into it.
-### Download
+#### Download
 	$ erl
-### Build
+#### Build
 	$ cd routing/src
 	$ erl
 	$ c(astar).
@@ -47,15 +55,19 @@ Create an App folder and cd into it.
 	$ c(store).
 	$ c(utils).
 
-# Usage
-## Start Erlang Interpreter
+## Usage
+### Start Erlang Interpreter
 	$ erl
 
-## Create Database
+### Create Database
 	$ routing:load_osm_data("/path/to/your/osm/file.osm").
 
-## Start Server
+### Start Server
 	$ routing:start().
 
-## Stop Server
+### Stop Server
 	$ routing:stop().
+
+## API Documentation
+
+[API Documentation](https://github.com/livelycode/routing/blob/master/api.md)
