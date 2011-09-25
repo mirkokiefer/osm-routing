@@ -35,7 +35,11 @@ route_description_recursive([[{node, Node}, {distance, Distance}, {angle, Angle}
         RelativeDistance > 0 -> distance_to_textual_direction(RelativeDistance);
         true -> ""
       end,
-      Direction = join_string([textual_direction(LogicalDirection), textual_direction(into), keyword(Way)]),
+      Direction = join_string([
+        textual_direction(LogicalDirection),
+        textual_direction(into),
+        keyword(textual_way_name(Way))
+      ]),
       NewOutput1 = [[{node, Node}, {distance, Distance}, {angle, Angle}, {walk, Walk}, {direction, Direction}]|Output],
       {NewOutput1, Distance}
   end,
@@ -70,4 +74,19 @@ textual_direction(Direction) ->
     into -> "in ";
     follow -> "Folgen Sie der Strasse fuer ";
     unit -> "m"
+  end.
+  
+textual_way_name(Name) ->
+  case Name of
+    "track" -> "den Feldweg";
+    "cycleway" -> "den Fahrradweg";
+    "pedestrian" -> "die Fussgängerzone";
+    "footway" -> "den Fussweg";
+    "road" -> "die Strasse";
+    "tertiary" -> "die Strasse";
+    "path" -> "den Pfad";
+    "secondary" -> "die Landstrasse";
+    "primary" -> "die Bundesstrasse";
+    "service" -> "die Zugangsstrasse";
+    Any -> Any
   end.
