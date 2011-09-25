@@ -14,8 +14,8 @@
 
 -define(HTTP_OPTS, [
             {loop, {?MODULE, loop}},
-            {port, 2904},
-            {name, http_2904}
+            {port, ?SERVER_PORT},
+            {name, http_routing}
             ]).
 
 start() ->
@@ -23,7 +23,7 @@ start() ->
   Http.
 
 stop() ->
-  mochiweb_http:stop(http_2904).
+  mochiweb_http:stop(http_routing).
 
 loop(Req) ->
   respond(Req:get(path), lists:sort(Req:parse_qs()), Req).

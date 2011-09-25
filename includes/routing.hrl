@@ -1,4 +1,6 @@
 
+-include("../includes/config.hrl").
+
 -record(node, {
   id,
   lat,

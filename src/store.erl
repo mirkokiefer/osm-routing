@@ -15,9 +15,9 @@ init() ->
   ets:new(osm_nodes_to_ways, [named_table, bag, public]). 
 
 start() ->
-  ets:file2tab("../output/osm_nodes.tab"),
-  ets:file2tab("../output/osm_ways.tab"),
-  ets:file2tab("../output/osm_nodes_to_ways.tab").
+  ets:file2tab(?NODES_DB),
+  ets:file2tab(?WAYS_DB),
+  ets:file2tab(?NODES_TO_WAYS_DB).
 
 stop() ->
   ets:delete(osm_nodes),
@@ -26,9 +26,9 @@ stop() ->
 
 serialize() ->
   filelib:ensure_dir("../output/"),
-  ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
-  ets:tab2file(osm_ways, "../output/osm_ways.tab"),
-  ets:tab2file(osm_nodes_to_ways, "../output/osm_nodes_to_ways.tab"). 
+  ets:tab2file(osm_nodes, ?NODES_DB),
+  ets:tab2file(osm_ways, ?WAYS_DB),
+  ets:tab2file(osm_nodes_to_ways, ?NODES_TO_WAYS_DB). 
 
 node2wayids(NodeID) ->
   Result = ets:lookup(osm_nodes_to_ways, NodeID),
