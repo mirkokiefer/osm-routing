@@ -88,5 +88,7 @@ textual_way_name(Name) ->
     "secondary" -> "die Landstrasse";
     "primary" -> "die Bundesstrasse";
     "service" -> "die Zugangsstrasse";
+    "unclassified" -> "den Weg";
+    "steps" -> "Richtung Treppen";
     Any -> Any
   end.
