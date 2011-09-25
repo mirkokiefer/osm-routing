@@ -46,7 +46,7 @@ var displayMap = function(from, to) {
         new google.maps.Marker(options);
         index++;
       });
-      displayRouteDescription(routeDescription);
+      displayRouteDescription(routeDescription, {time: data.time, distance: data.distance});
     });
   });
 };
@@ -62,7 +62,7 @@ var displayEmptyMap = function() {
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 };
 
-var displayRouteDescription = function(data) {
+var displayRouteDescription = function(data, stats) {
   var index = 0;
   var last = data.pop();
   var text = data.map(function(each) {
@@ -70,6 +70,8 @@ var displayRouteDescription = function(data) {
     return each.walk + '<br><br>' + new String(index) + ': ' + each.direction + '<br>';
   });
   text.push(last.walk);
+  text.push("<br><br>Distanz: " + (stats.distance/1000).toFixed(2) + " km<br>");
+  text.push("Routenberechnung: " + new String(stats.time/1000000) + " Sekunden");
   $('#directions').html(text.join(''));
 };
 
