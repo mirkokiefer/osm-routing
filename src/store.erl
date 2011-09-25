@@ -6,7 +6,8 @@
 % The interface to the ets tables storing node and way data. The ets tables should always be accessed through this module.
 
 -module(store).
--export([init/0, start/0, stop/0, serialize/0, node2wayids/1, lookup_way/1, lookup_node/1, store_way/1, store_node/1]).
+-export([init/0, start/0, stop/0, serialize/0, node2wayids/1, lookup_way/1, lookup_node/1,
+  store_way/1, store_node/1, store_node2wayid/2]).
 -include("../includes/routing.hrl").
 
 init() ->
@@ -51,3 +52,6 @@ store_way(Way) ->
   
 store_node(Node) ->
   ets:insert(osm_nodes, Node).
+  
+store_node2wayid(Node, WayID) ->
+ ets:insert(osm_nodes_to_ways, {Node, WayID}).

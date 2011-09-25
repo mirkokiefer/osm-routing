@@ -100,7 +100,7 @@ event_nodes(_Event, State) ->
 % process read node
 node_read(Node=#node{id=ID}) ->
   % check if node is used within a way
-  case ets:lookup(osm_nodes_to_ways, ID) of
+  case store:node2wayids(ID) of
     [] -> ignore;
     _Any -> store:store_node(Node)
   end.
@@ -121,7 +121,7 @@ build_nodes_ways_tab(NextKey) ->
   build_nodes_ways_tab(ets:next(osm_ways, NextKey)).
   
 write_nodes_to_way(Refs, WayID) ->
-  lists:foreach(fun(Ref) -> ets:insert(osm_nodes_to_ways, {Ref, WayID}) end, Refs).
+  lists:foreach(fun(Ref) -> store:store_node2wayid(Ref, WayID) end, Refs).
 
 % helper functions
 filterAttributes(Attributes, FilterAttributes) ->
