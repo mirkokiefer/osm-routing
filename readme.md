@@ -14,10 +14,10 @@ Get the current source from https://github.com/livelycode/routing.
 2. Unpack the download.
 3. Now cd into the base dir.  
 
-**Build**  
+####Build
 	$ ./configure
 	$ make  
-**Install**  
+####Install  
 	$ make install
 
 ### Erlsom
