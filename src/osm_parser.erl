@@ -15,21 +15,44 @@
   other = []
 }).
 
+-define(chunk, 10000).
+
 read(File) ->
-  {ok, Xml} = file:read_file(File),
-  ets:new(osm_nodes, [named_table, set, public]),
-  ets:new(osm_ways, [named_table, set, public]),
-  ets:new(osm_nodes_to_ways, [named_table, bag, public]),
-  erlsom:parse_sax(Xml, [], fun event_ways/2),
-  build_nodes_ways_tab(),
-  erlsom:parse_sax(Xml, [], fun event_nodes/2),
+  create_tabs(),
   
-  filelib:ensure_dir("../output/"),
+  parse_file(File, fun event_ways/2),
+  build_nodes_ways_tab(),
+  parse_file(File, fun event_nodes/2),
+  
   write_tabs(),
   delete_tabs(),
   success.
   
+parse_file(File, Fun) ->
+  G = fun continue_file/2,
+  {ok, Handle} = file:open(File, [read, raw, binary]),
+  Position = 0,
+  CState = {Handle, Position, ?chunk},
+  SaxCallbackState = undefined,
+  
+  erlsom:parse_sax(<<>>, SaxCallbackState, Fun, [{continuation_function, G, CState}]).
+  
+continue_file(Tail, {Handle, Offset, Chunk}) ->
+  %% read the next chunk
+  case file:pread(Handle, Offset, Chunk) of
+    {ok, Data} ->
+      {<<Tail/binary, Data/binary>>, {Handle, Offset + Chunk, Chunk}};
+    eof ->
+      {Tail, {Handle, Offset, Chunk}}
+  end.
+  
+create_tabs() ->
+  ets:new(osm_nodes, [named_table, set, public]),
+  ets:new(osm_ways, [named_table, set, public]),
+  ets:new(osm_nodes_to_ways, [named_table, bag, public]).
+  
 write_tabs() ->
+  filelib:ensure_dir("../output/"),
   ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
   ets:tab2file(osm_ways, "../output/osm_ways.tab"),
   ets:tab2file(osm_nodes_to_ways, "../output/osm_nodes_to_ways.tab").  
@@ -39,12 +62,8 @@ delete_tabs() ->
   ets:delete(osm_ways),
   ets:delete(osm_nodes_to_ways).
 
-parseAttributes(Attributes) ->
-  [{Attr, Value} || {_, Attr, _, _, Value} <- Attributes].
-
 filterAttributes(Attributes, FilterAttributes) ->
-  ParsedAttributes = parseAttributes(Attributes),
-  [lists:nth(1, [Value || {Attr, Value} <- ParsedAttributes, Attr == FilterAttr]) ||
+  [lists:nth(1, [Value || {_, Attr, _, _, Value} <- Attributes, Attr == FilterAttr]) ||
       FilterAttr <- FilterAttributes].
 
 % handle way tags
