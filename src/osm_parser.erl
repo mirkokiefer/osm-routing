@@ -29,8 +29,8 @@ read(File) ->
   success.
   
 create_tabs() ->
-  ets:new(osm_nodes, [named_table, set, public]),
-  ets:new(osm_ways, [named_table, set, public]),
+  ets:new(osm_nodes, [named_table, set, public, {keypos, 2}]),
+  ets:new(osm_ways, [named_table, set, public, {keypos, 2}]),
   ets:new(osm_nodes_to_ways, [named_table, bag, public]).
   
 write_tabs() ->
@@ -124,7 +124,7 @@ node_read(Node=#node{id=ID}) ->
 % build a table to translate Nodes to Ways
 build_nodes_ways_tab() ->
   FirstKey = ets:first(osm_ways),
-  [{ID, _, {refs, Refs}}] = ets:lookup(osm_ways, FirstKey),
+  #way{id=ID, refs=Refs} = store:lookup_way(FirstKey),
   write_nodes_to_way(Refs, ID),
   build_nodes_ways_tab(ets:next(osm_ways, FirstKey)).
 
@@ -132,7 +132,7 @@ build_nodes_ways_tab('$end_of_table') ->
   true;
 
 build_nodes_ways_tab(NextKey) ->
-  [{ID, _, {refs, Refs}}] = ets:lookup(osm_ways, NextKey),
+  #way{id=ID, refs=Refs} = store:lookup_way(NextKey),
   write_nodes_to_way(Refs, ID),
   build_nodes_ways_tab(ets:next(osm_ways, NextKey)).
   
@@ -140,11 +140,11 @@ write_nodes_to_way(Refs, WayID) ->
   lists:foreach(fun(Ref) -> ets:insert(osm_nodes_to_ways, {Ref, WayID}) end, Refs).
   
 % store accessing functions
-store_way(#way{id=ID, tags=Tags, refs=Refs}) ->
-  ets:insert(osm_ways, {ID, {tags, Tags}, {refs, Refs}}).
+store_way(Way) ->
+  ets:insert(osm_ways, Way).
   
-store_node(#node{id=ID, lat=Lat, lon=Lon, tags=Tags}) ->
-  ets:insert(osm_nodes, {ID, {lat, Lat}, {lon, Lon}, {tags, Tags}}).
+store_node(Node) ->
+  ets:insert(osm_nodes, Node).
 
 % helper functions
 filterAttributes(Attributes, FilterAttributes) ->

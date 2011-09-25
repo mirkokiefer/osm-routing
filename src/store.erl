@@ -15,12 +15,12 @@ node2wayids(NodeID) ->
   
 lookup_way(WayID) ->
   case ets:lookup(osm_ways, WayID) of
-    [{Id, {tags, Tags}, {refs, Refs}}] -> #way{id=Id, tags=Tags, refs=Refs};
-    _ -> undefined
+    [] -> undefined;
+    [Way|_] -> Way
   end.
   
 lookup_node(NodeID) ->
   case ets:lookup(osm_nodes, NodeID) of
-    [{Id, {lat, Lat}, {lon ,Lon}, {tags, Tags}}] -> #node{id=Id, lat=Lat, lon=Lon, tags=Tags};
-    [] -> undefined
+    [] -> undefined;
+    [Node|_] -> Node
   end.
