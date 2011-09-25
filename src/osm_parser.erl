@@ -15,36 +15,16 @@
   other = []
 }).
 
--define(chunk, 10000).
-
 read(File) ->
   create_tabs(),
   
-  parse_file(File, fun event_ways/2),
+  xml_parser:parse_file(File, fun event_ways/2),
   build_nodes_ways_tab(),
-  parse_file(File, fun event_nodes/2),
+  xml_parser:parse_file(File, fun event_nodes/2),
   
   write_tabs(),
   delete_tabs(),
   success.
-  
-parse_file(File, Fun) ->
-  G = fun continue_file/2,
-  {ok, Handle} = file:open(File, [read, raw, binary]),
-  Position = 0,
-  CState = {Handle, Position, ?chunk},
-  SaxCallbackState = undefined,
-  
-  erlsom:parse_sax(<<>>, SaxCallbackState, Fun, [{continuation_function, G, CState}]).
-  
-continue_file(Tail, {Handle, Offset, Chunk}) ->
-  %% read the next chunk
-  case file:pread(Handle, Offset, Chunk) of
-    {ok, Data} ->
-      {<<Tail/binary, Data/binary>>, {Handle, Offset + Chunk, Chunk}};
-    eof ->
-      {Tail, {Handle, Offset, Chunk}}
-  end.
   
 create_tabs() ->
   ets:new(osm_nodes, [named_table, set, public]),
@@ -66,7 +46,7 @@ filterAttributes(Attributes, FilterAttributes) ->
   [lists:nth(1, [Value || {_, Attr, _, _, Value} <- Attributes, Attr == FilterAttr]) ||
       FilterAttr <- FilterAttributes].
 
-% handle way tags
+% handle parser callbacks for ways
 event_ways({startElement, _, "way", _, Attributes}, _) ->
   [ID] = filterAttributes(Attributes, ["id"]),
   State = {{id, list_to_atom(ID)}, [], []},
@@ -88,31 +68,22 @@ event_ways({startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs}) 
 
 event_ways({endElement, _, "way", _}, State) ->
   {{id, ID}, Tags, Refs} = State,
-  TagsRecord = way_tags_to_record(Tags),
-  case valid_way(TagsRecord) of
-    true -> Tags1 = [{"routing_name", way_name(TagsRecord)}|Tags],
-      ets:insert(osm_ways, {ID, {tags, Tags1}, {refs, Refs}});
-    false -> ignore
-  end,
+  way_read([{id, ID}, {tags, Tags}, {refs, Refs}]),
   [];
 
 event_ways(_Event, State) ->
   State.
 
-way_tags_to_record(WayTags) ->
-  way_tags_to_record_recursive(WayTags, #way_tags{}).
-
-way_tags_to_record_recursive([], Record) ->
-  Record;
-
-way_tags_to_record_recursive([First|Rest], Record=#way_tags{other=Other}) ->
-  Record1 = case First of
-    {"highway", Value} -> Record#way_tags{highway=Value};
-    {"ref", Value} -> Record#way_tags{ref=Value};
-    {"name", Value} -> Record#way_tags{name=Value};
-    Any -> Record#way_tags{other=[Any|Other]}
-  end,
-  way_tags_to_record_recursive(Rest, Record1).
+% process read way
+way_read([{id, ID}, {tags, Tags}, {refs, Refs}]) ->
+  TagsRecord = way_tags_to_record(Tags),
+  case valid_way(TagsRecord) of
+    true ->
+      % store additional tag for name to be used in routing descriptions
+      Tags1 = [{"routing_name", way_name(TagsRecord)}|Tags],
+      ets:insert(osm_ways, {ID, {tags, Tags1}, {refs, Refs}});
+    false -> ignore
+  end.
   
 way_name(Tags) ->
   case Tags of
@@ -129,7 +100,7 @@ valid_way(Tags) ->
     _Any -> false
   end.
 
-% handle node tags
+% handle parser callbacks for nodes
 event_nodes({startElement, _, "node", _, Attributes}, _) ->
   [ID, Lat, Lon] = filterAttributes(Attributes, ["id", "lat", "lon"]),
   State = {{id, list_to_atom(ID), lat, Lat, lon, Lon}, []},
@@ -146,17 +117,20 @@ event_nodes({startElement, _, "tag", _, Attributes}, State) ->
 
 event_nodes({endElement, _, "node", _}, State) ->
   {{id, ID, lat, Lat, lon, Lon}, Tags} = State,
-  % check if node is used within a way
-  case ets:lookup(osm_nodes_to_ways, ID) of
-    [] -> ignore;
-    _Any -> ets:insert(osm_nodes, {ID, {lat, Lat}, {lon, Lon}, {tags, Tags}})
-  end,
+  node_read([{id, ID}, {lat, Lat}, {lon, Lon}, {tags, Tags}]),
   [];
 
 %% Catch-all. Pass state on as-is
 event_nodes(_Event, State) ->
   State.
 
+% process read node
+node_read([{id, ID}, Lat, Lon, Tags]) ->
+  % check if node is used within a way
+  case ets:lookup(osm_nodes_to_ways, ID) of
+    [] -> ignore;
+    _Any -> ets:insert(osm_nodes, {ID, Lat, Lon, Tags})
+  end.
 
 % build a table to translate Nodes to Ways
 build_nodes_ways_tab() ->
@@ -175,3 +149,19 @@ build_nodes_ways_tab(NextKey) ->
   
 write_nodes_to_way(Refs, WayID) ->
   lists:foreach(fun(Ref) -> ets:insert(osm_nodes_to_ways, {Ref, WayID}) end, Refs).
+  
+% helper functions
+way_tags_to_record(WayTags) ->
+  way_tags_to_record_recursive(WayTags, #way_tags{}).
+
+way_tags_to_record_recursive([], Record) ->
+  Record;
+
+way_tags_to_record_recursive([First|Rest], Record=#way_tags{other=Other}) ->
+  Record1 = case First of
+    {"highway", Value} -> Record#way_tags{highway=Value};
+    {"ref", Value} -> Record#way_tags{ref=Value};
+    {"name", Value} -> Record#way_tags{name=Value};
+    Any -> Record#way_tags{other=[Any|Other]}
+  end,
+  way_tags_to_record_recursive(Rest, Record1).
