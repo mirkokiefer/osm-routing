@@ -6,6 +6,11 @@
   Accessing the backend through HTTP requests, drawing the map and route using Google Maps, displaying the route description.
 */
 
+var developMode = false;
+var develop = function() {
+  return developMode;
+}
+
 var getParameterByName = function(name) {
   var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
   return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
@@ -67,7 +72,11 @@ var displayRouteDescription = function(data, stats) {
   var last = data.pop();
   var text = data.map(function(each) {
     index++;
-    return each.walk + '<br><br>' + new String(index) + ': ' + each.direction + '<br>';
+    var developModeString = '';
+    if(develop()) {
+      developModeString = ' (node: ' + each.location.node + ')';    
+    }
+    return each.walk + '<br><br>' + new String(index) + developModeString + ': ' + each.direction + '<br>';
   });
   text.push(last.walk);
   text.push("<br><br>Distanz: " + (stats.distance/1000).toFixed(2) + " km<br>");
@@ -86,6 +95,9 @@ var initForm = function() {
 $(function() {
   var from = getParameterByName('from');
   var to = getParameterByName('to');
+  if(getParameterByName('develop') == 'true') {
+    developMode = true;
+  }
   $("#from").val(from);
   $("#to").val(to);
   displayMap(from, to);
