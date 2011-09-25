@@ -2,7 +2,7 @@
 An Erlang geo-routing system based on OpenStreetMap data providing a HTTP-API.
 
 ## Authors
-- [Mirko Kiefer](https://github.com/mirkok) (mail@mirkokiefer.com)
+- [Mirko Kiefer](https://github.com/mirkok)
 - [Haykuhi Jaghinyan](mailto:haikuhi290489@aol.com)
 - [Johannes Auer](https://github.com/johannesauer)
 
@@ -13,10 +13,10 @@ Get the current source from https://github.com/livelycode/routing.
 1. Download Erlang/OTP R14B03 at http://www.erlang.org/download.html.
 2. Unpack the download.
 3. Now cd into the base dir.
-#### Build
+**Build**
     $ ./configure
     $ make
-#### Install
+**Install**
     $ make install
 
 ### Erlsom
