@@ -3,13 +3,13 @@
   id,
   lat,
   lon,
-  tags
+  tags=[]
 }).
 
 -record(way, {
   id,
-  tags,
-  refs
+  tags=[],
+  refs=[]
 }).
 
 -record(route, {

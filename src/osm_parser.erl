@@ -8,6 +8,8 @@
 -module(osm_parser).
 -export([read/1, way_tags_to_record/1]).
 
+-include("../includes/routing.hrl").
+
 -record(way_tags, {
   highway = undefined,
   name = undefined,
@@ -42,46 +44,37 @@ delete_tabs() ->
   ets:delete(osm_ways),
   ets:delete(osm_nodes_to_ways).
 
-filterAttributes(Attributes, FilterAttributes) ->
-  [lists:nth(1, [Value || {_, Attr, _, _, Value} <- Attributes, Attr == FilterAttr]) ||
-      FilterAttr <- FilterAttributes].
-
 % handle parser callbacks for ways
 event_ways({startElement, _, "way", _, Attributes}, _) ->
   [ID] = filterAttributes(Attributes, ["id"]),
-  State = {{id, list_to_atom(ID)}, [], []},
-  State;
+  #way{id=list_to_atom(ID)};
   
 event_ways({startElement, _, "tag", _, Attributes}, State) ->
   [K, V] = filterAttributes(Attributes, ["k", "v"]),
   case State of
-    {Node, Tags} -> NewState = {Node,[{tag, K, V} | Tags]};
-    {Node, Tags, Refs} -> NewState = {Node,[{K, V} | Tags], Refs};
-    _Any -> NewState = State
-  end,
-  NewState;
+    #way{tags=Tags} -> State#way{tags=[{K, V} | Tags]};
+    _Any -> State
+  end;
 
-event_ways({startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs}) ->
+event_ways({startElement, _, "nd", _, Attributes}, State=#way{refs=Refs}) ->
   [Ref] = filterAttributes(Attributes, ["ref"]),
-  NewState = {Node, Tags, [list_to_atom(Ref) | Refs]},
-  NewState;
+  State#way{refs=[list_to_atom(Ref) | Refs]};
 
 event_ways({endElement, _, "way", _}, State) ->
-  {{id, ID}, Tags, Refs} = State,
-  way_read([{id, ID}, {tags, Tags}, {refs, Refs}]),
+  way_read(State),
   [];
 
 event_ways(_Event, State) ->
   State.
 
 % process read way
-way_read([{id, ID}, {tags, Tags}, {refs, Refs}]) ->
+way_read(Way=#way{id=ID, refs=Refs, tags=Tags}) ->
   TagsRecord = way_tags_to_record(Tags),
   case valid_way(TagsRecord) of
     true ->
       % store additional tag for name to be used in routing descriptions
       Tags1 = [{"routing_name", way_name(TagsRecord)}|Tags],
-      ets:insert(osm_ways, {ID, {tags, Tags1}, {refs, Refs}});
+      store_way(Way#way{tags=Tags1});
     false -> ignore
   end.
   
@@ -103,21 +96,17 @@ valid_way(Tags) ->
 % handle parser callbacks for nodes
 event_nodes({startElement, _, "node", _, Attributes}, _) ->
   [ID, Lat, Lon] = filterAttributes(Attributes, ["id", "lat", "lon"]),
-  State = {{id, list_to_atom(ID), lat, Lat, lon, Lon}, []},
-  State;
+  #node{id=list_to_atom(ID), lat=Lat, lon=Lon};
 
 event_nodes({startElement, _, "tag", _, Attributes}, State) ->
   [K, V] = filterAttributes(Attributes, ["k", "v"]),
   case State of
-    {Node, Tags} -> NewState = {Node,[{tag, K, V} | Tags]};
-    {Node, Tags, Refs} -> NewState = {Node,[{K, V} | Tags], Refs};
-    _Any -> NewState = State
-  end,
-  NewState;
+    #node{tags=Tags} -> State#node{tags=[{K, V} | Tags]};
+    _Any -> State
+  end;
 
 event_nodes({endElement, _, "node", _}, State) ->
-  {{id, ID, lat, Lat, lon, Lon}, Tags} = State,
-  node_read([{id, ID}, {lat, Lat}, {lon, Lon}, {tags, Tags}]),
+  node_read(State),
   [];
 
 %% Catch-all. Pass state on as-is
@@ -125,11 +114,11 @@ event_nodes(_Event, State) ->
   State.
 
 % process read node
-node_read([{id, ID}, Lat, Lon, Tags]) ->
+node_read(Node=#node{id=ID}) ->
   % check if node is used within a way
   case ets:lookup(osm_nodes_to_ways, ID) of
     [] -> ignore;
-    _Any -> ets:insert(osm_nodes, {ID, Lat, Lon, Tags})
+    _Any -> store_node(Node)
   end.
 
 % build a table to translate Nodes to Ways
@@ -150,7 +139,18 @@ build_nodes_ways_tab(NextKey) ->
 write_nodes_to_way(Refs, WayID) ->
   lists:foreach(fun(Ref) -> ets:insert(osm_nodes_to_ways, {Ref, WayID}) end, Refs).
   
+% store accessing functions
+store_way(#way{id=ID, tags=Tags, refs=Refs}) ->
+  ets:insert(osm_ways, {ID, {tags, Tags}, {refs, Refs}}).
+  
+store_node(#node{id=ID, lat=Lat, lon=Lon, tags=Tags}) ->
+  ets:insert(osm_nodes, {ID, {lat, Lat}, {lon, Lon}, {tags, Tags}}).
+
 % helper functions
+filterAttributes(Attributes, FilterAttributes) ->
+  [lists:nth(1, [Value || {_, Attr, _, _, Value} <- Attributes, Attr == FilterAttr]) ||
+      FilterAttr <- FilterAttributes].
+
 way_tags_to_record(WayTags) ->
   way_tags_to_record_recursive(WayTags, #way_tags{}).
 
