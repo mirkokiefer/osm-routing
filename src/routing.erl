@@ -11,19 +11,12 @@
 -export([start/0, stop/0, load_osm_data/1]).
 
 start() ->
-  load_tables(),
+  store:start(),
   _Http = server:start().
   
 stop() ->
-  ets:delete(osm_nodes),
-  ets:delete(osm_ways),
-  ets:delete(osm_nodes_to_ways),
+  store:stop(),
   server:stop().
   
 load_osm_data(File) ->
   osm_parser:read(File).
-  
-load_tables() ->
-  ets:file2tab("../output/osm_nodes.tab"),
-  ets:file2tab("../output/osm_ways.tab"),
-  ets:file2tab("../output/osm_nodes_to_ways.tab").

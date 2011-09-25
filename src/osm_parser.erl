@@ -18,31 +18,15 @@
 }).
 
 read(File) ->
-  create_tabs(),
+  store:init(),
   
   xml_parser:parse_file(File, fun event_ways/2),
   build_nodes_ways_tab(),
   xml_parser:parse_file(File, fun event_nodes/2),
   
-  write_tabs(),
-  delete_tabs(),
+  store:serialize(),
+  store:stop(),
   success.
-  
-create_tabs() ->
-  ets:new(osm_nodes, [named_table, set, public, {keypos, 2}]),
-  ets:new(osm_ways, [named_table, set, public, {keypos, 2}]),
-  ets:new(osm_nodes_to_ways, [named_table, bag, public]).
-  
-write_tabs() ->
-  filelib:ensure_dir("../output/"),
-  ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
-  ets:tab2file(osm_ways, "../output/osm_ways.tab"),
-  ets:tab2file(osm_nodes_to_ways, "../output/osm_nodes_to_ways.tab").  
-
-delete_tabs() ->
-  ets:delete(osm_nodes),
-  ets:delete(osm_ways),
-  ets:delete(osm_nodes_to_ways).
 
 % handle parser callbacks for ways
 event_ways({startElement, _, "way", _, Attributes}, _) ->
@@ -68,13 +52,13 @@ event_ways(_Event, State) ->
   State.
 
 % process read way
-way_read(Way=#way{id=ID, refs=Refs, tags=Tags}) ->
+way_read(Way=#way{tags=Tags}) ->
   TagsRecord = way_tags_to_record(Tags),
   case valid_way(TagsRecord) of
     true ->
       % store additional tag for name to be used in routing descriptions
       Tags1 = [{"routing_name", way_name(TagsRecord)}|Tags],
-      store_way(Way#way{tags=Tags1});
+      store:store_way(Way#way{tags=Tags1});
     false -> ignore
   end.
   
@@ -118,7 +102,7 @@ node_read(Node=#node{id=ID}) ->
   % check if node is used within a way
   case ets:lookup(osm_nodes_to_ways, ID) of
     [] -> ignore;
-    _Any -> store_node(Node)
+    _Any -> store:store_node(Node)
   end.
 
 % build a table to translate Nodes to Ways
@@ -138,13 +122,6 @@ build_nodes_ways_tab(NextKey) ->
   
 write_nodes_to_way(Refs, WayID) ->
   lists:foreach(fun(Ref) -> ets:insert(osm_nodes_to_ways, {Ref, WayID}) end, Refs).
-  
-% store accessing functions
-store_way(Way) ->
-  ets:insert(osm_ways, Way).
-  
-store_node(Node) ->
-  ets:insert(osm_nodes, Node).
 
 % helper functions
 filterAttributes(Attributes, FilterAttributes) ->
