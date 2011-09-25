@@ -3,3 +3,4 @@
 *.bz2
 *.osm
 /erl_crash.dump
+/src/test.erl
