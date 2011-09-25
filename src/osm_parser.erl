@@ -99,11 +99,16 @@ way_tags_to_record_recursive([First|Rest], Record=#way_tags{other=Other}) ->
   way_tags_to_record_recursive(Rest, Record1).
   
 name(Tags) ->
-  Tags#way_tags.name.
+  case Tags of
+    #way_tags{name=Name} when Name /= undefined -> Name;
+    #way_tags{ref=Ref} when Ref /= undefined -> Ref;
+    #way_tags{highway=Highway} when Highway /= undefined -> Highway;
+    _Any -> "unknown"
+  end.
   
 valid_way(Tags) ->
   case Tags of
-    #way_tags{name=undefined} -> false;
-    #way_tags{name=_Any} -> true;
+    #way_tags{highway="motorway"} -> false;
+    #way_tags{highway=Any} when Any /= undefined -> true;
     _Any -> false
   end.
