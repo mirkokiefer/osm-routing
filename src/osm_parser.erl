@@ -19,12 +19,25 @@ read(File) ->
   {ok, Xml} = file:read_file(File),
   ets:new(osm_nodes, [named_table, set, public]),
   ets:new(osm_ways, [named_table, set, public]),
-  erlsom:parse_sax(Xml, [], fun event/2),
+  ets:new(osm_nodes_to_ways, [named_table, bag, public]),
+  erlsom:parse_sax(Xml, [], fun event_ways/2),
+  erlsom:parse_sax(Xml, [], fun event_nodes/2),
+  build_nodes_ways_tab(),
+  
   filelib:ensure_dir("../output/"),
-  ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
-  ets:tab2file(osm_ways, "../output/osm_ways.tab"),
+  write_tabs(),
   delete_tabs(),
   success.
+  
+write_tabs() ->
+  ets:tab2file(osm_nodes, "../output/osm_nodes.tab"),
+  ets:tab2file(osm_ways, "../output/osm_ways.tab"),
+  ets:tab2file(osm_nodes_to_ways, "../output/osm_nodes_to_ways.tab").  
+
+delete_tabs() ->
+  ets:delete(osm_nodes),
+  ets:delete(osm_ways),
+  ets:delete(osm_nodes_to_ways).
 
 parseAttributes(Attributes) ->
   [{Attr, Value} || {_, Attr, _, _, Value} <- Attributes].
@@ -35,12 +48,12 @@ filterAttributes(Attributes, FilterAttributes) ->
       FilterAttr <- FilterAttributes].
 
 
-event({startElement, _, "node", _, Attributes}, _) ->
+event_nodes({startElement, _, "node", _, Attributes}, _) ->
   [ID, Lat, Lon] = filterAttributes(Attributes, ["id", "lat", "lon"]),
   State = {{id, list_to_atom(ID), lat, Lat, lon, Lon}, []},
   State;
 
-event({startElement, _, "tag", _, Attributes}, State) ->
+event_nodes({startElement, _, "tag", _, Attributes}, State) ->
   [K, V] = filterAttributes(Attributes, ["k", "v"]),
   case State of
     {Node, Tags} -> NewState = {Node,[{tag, K, V} | Tags]};
@@ -49,23 +62,36 @@ event({startElement, _, "tag", _, Attributes}, State) ->
   end,
   NewState;
 
-event({endElement, _, "node", _}, State) ->
+event_nodes({endElement, _, "node", _}, State) ->
   %io:format("end node: ~p~n", [State]),
   {{id, ID, lat, Lat, lon, Lon}, Tags} = State,
   ets:insert(osm_nodes, {ID, {lat, Lat}, {lon, Lon}, {tags, Tags}}),
   [];
 
-event({startElement, _, "way", _, Attributes}, _) ->
+%% Catch-all. Pass state on as-is
+event_nodes(_Event, State) ->
+  State.
+
+event_ways({startElement, _, "way", _, Attributes}, _) ->
   [ID] = filterAttributes(Attributes, ["id"]),
   State = {{id, list_to_atom(ID)}, [], []},
   State;
+  
+event_ways({startElement, _, "tag", _, Attributes}, State) ->
+  [K, V] = filterAttributes(Attributes, ["k", "v"]),
+  case State of
+    {Node, Tags} -> NewState = {Node,[{tag, K, V} | Tags]};
+    {Node, Tags, Refs} -> NewState = {Node,[{K, V} | Tags], Refs};
+    _Any -> NewState = State
+  end,
+  NewState;
 
-event({startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs}) ->
+event_ways({startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs}) ->
   [Ref] = filterAttributes(Attributes, ["ref"]),
   NewState = {Node, Tags, [list_to_atom(Ref) | Refs]},
   NewState;
 
-event({endElement, _, "way", _}, State) ->
+event_ways({endElement, _, "way", _}, State) ->
   {{id, ID}, Tags, Refs} = State,
   TagsRecord = way_tags_to_record(Tags),
   case valid_way(TagsRecord) of
@@ -76,12 +102,8 @@ event({endElement, _, "way", _}, State) ->
   [];
 
 %% Catch-all. Pass state on as-is
-event(_Event, State) ->
+event_ways(_Event, State) ->
   State.
-  
-delete_tabs() ->
-  ets:delete(osm_nodes),
-  ets:delete(osm_ways).
 
 way_tags_to_record(WayTags) ->
   way_tags_to_record_recursive(WayTags, #way_tags{}).
@@ -112,3 +134,21 @@ valid_way(Tags) ->
     #way_tags{highway=Any} when Any /= undefined -> true;
     _Any -> false
   end.
+
+% build a table to translate Nodes to Ways
+build_nodes_ways_tab() ->
+  FirstKey = ets:first(osm_ways),
+  [{ID, _, {refs, Refs}}] = ets:lookup(osm_ways, FirstKey),
+  write_nodes_to_way(Refs, ID),
+  build_nodes_ways_tab(ets:next(osm_ways, FirstKey)).
+
+build_nodes_ways_tab('$end_of_table') ->
+  true;
+
+build_nodes_ways_tab(NextKey) ->
+  [{ID, _, {refs, Refs}}] = ets:lookup(osm_ways, NextKey),
+  write_nodes_to_way(Refs, ID),
+  build_nodes_ways_tab(ets:next(osm_ways, NextKey)).
+  
+write_nodes_to_way(Refs, WayID) ->
+  lists:foreach(fun(Ref) -> ets:insert(osm_nodes_to_ways, {Ref, WayID}) end, Refs).

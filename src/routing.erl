@@ -11,7 +11,7 @@
 -export([start/0, stop/0, load_osm_data/1]).
 
 start() ->
-  processing:loadData(),
+  load_tables(),
   _Http = server:start().
   
 stop() ->
@@ -22,3 +22,8 @@ stop() ->
   
 load_osm_data(File) ->
   osm_parser:read(File).
+  
+load_tables() ->
+  ets:file2tab("../output/osm_nodes.tab"),
+  ets:file2tab("../output/osm_ways.tab"),
+  ets:file2tab("../output/osm_nodes_to_ways.tab").
