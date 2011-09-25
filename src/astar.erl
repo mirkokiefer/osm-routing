@@ -52,7 +52,7 @@ recurse_nodes(Node, Target, State=#state{tab=Tab, queue=Queue, visited_nodes=Vis
   visited(Node, true, Visited),
   OldQueueEntry = add_heuristic(get_distance(Node, Tab), Node, Target),
   Q1 = priority_queue:remove({Node, OldQueueEntry}, Queue),
-  Neighbours = geodata:neighbours(Node),
+  Neighbours = neighbours(Node),
   Q2 = update_distances(Node, Target, Neighbours, State#state{queue=Q1}),
   case gb_trees:size(Q2) of
     0 -> Tab;
@@ -91,7 +91,7 @@ add_heuristic(undefined, _Node, _Target) ->
   undefined;
 
 add_heuristic(Distance, Node, Target) ->
-  Distance+geodata:distance(Node, Target).
+  Distance+distance(Node, Target).
 
 % helper functions
 get_distance(Node, Tab) ->
@@ -127,3 +127,8 @@ read_path(undefined, Path, _Tab) ->
 
 read_path(Node, Path, Tab) ->
   read_path(get_previous(Node, Tab), [Node|Path], Tab).
+  
+% data accessing functions
+distance(NodeA, NodeB) -> geodata:distance(NodeA, NodeB).
+
+neighbours(Node) -> geodata:neighbours(Node).
