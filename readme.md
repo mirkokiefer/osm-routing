@@ -1,5 +1,5 @@
 # OSM Routing
-An Erlang geo-routing system based on OpenStreetMap data providing a HTTP-API.
+An Erlang geo-routing system based on OpenStreetMap data which provides an HTTP-API.
 
 ## Authors
 - [Mirko Kiefer](https://github.com/mirkok)
