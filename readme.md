@@ -12,11 +12,12 @@ Get the current source from https://github.com/livelycode/routing.
 #### Download
 1. Download Erlang/OTP R14B03 at http://www.erlang.org/download.html.
 2. Unpack the download.
-3. Now cd into the base dir.
-**Build**
+3. Now cd into the base dir.  
+
+**Build**  
     $ ./configure
     $ make
-**Install**
+**Install**  
     $ make install
 
 ### Erlsom
