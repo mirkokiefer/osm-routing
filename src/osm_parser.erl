@@ -21,8 +21,8 @@ read(File) ->
   ets:new(osm_ways, [named_table, set, public]),
   ets:new(osm_nodes_to_ways, [named_table, bag, public]),
   erlsom:parse_sax(Xml, [], fun event_ways/2),
-  erlsom:parse_sax(Xml, [], fun event_nodes/2),
   build_nodes_ways_tab(),
+  erlsom:parse_sax(Xml, [], fun event_nodes/2),
   
   filelib:ensure_dir("../output/"),
   write_tabs(),
@@ -47,31 +47,7 @@ filterAttributes(Attributes, FilterAttributes) ->
   [lists:nth(1, [Value || {Attr, Value} <- ParsedAttributes, Attr == FilterAttr]) ||
       FilterAttr <- FilterAttributes].
 
-
-event_nodes({startElement, _, "node", _, Attributes}, _) ->
-  [ID, Lat, Lon] = filterAttributes(Attributes, ["id", "lat", "lon"]),
-  State = {{id, list_to_atom(ID), lat, Lat, lon, Lon}, []},
-  State;
-
-event_nodes({startElement, _, "tag", _, Attributes}, State) ->
-  [K, V] = filterAttributes(Attributes, ["k", "v"]),
-  case State of
-    {Node, Tags} -> NewState = {Node,[{tag, K, V} | Tags]};
-    {Node, Tags, Refs} -> NewState = {Node,[{K, V} | Tags], Refs};
-    _Any -> NewState = State
-  end,
-  NewState;
-
-event_nodes({endElement, _, "node", _}, State) ->
-  %io:format("end node: ~p~n", [State]),
-  {{id, ID, lat, Lat, lon, Lon}, Tags} = State,
-  ets:insert(osm_nodes, {ID, {lat, Lat}, {lon, Lon}, {tags, Tags}}),
-  [];
-
-%% Catch-all. Pass state on as-is
-event_nodes(_Event, State) ->
-  State.
-
+% handle way tags
 event_ways({startElement, _, "way", _, Attributes}, _) ->
   [ID] = filterAttributes(Attributes, ["id"]),
   State = {{id, list_to_atom(ID)}, [], []},
@@ -95,13 +71,12 @@ event_ways({endElement, _, "way", _}, State) ->
   {{id, ID}, Tags, Refs} = State,
   TagsRecord = way_tags_to_record(Tags),
   case valid_way(TagsRecord) of
-    true -> Tags1 = [{"routing_name", name(TagsRecord)}|Tags],
+    true -> Tags1 = [{"routing_name", way_name(TagsRecord)}|Tags],
       ets:insert(osm_ways, {ID, {tags, Tags1}, {refs, Refs}});
     false -> ignore
   end,
   [];
 
-%% Catch-all. Pass state on as-is
 event_ways(_Event, State) ->
   State.
 
@@ -120,7 +95,7 @@ way_tags_to_record_recursive([First|Rest], Record=#way_tags{other=Other}) ->
   end,
   way_tags_to_record_recursive(Rest, Record1).
   
-name(Tags) ->
+way_name(Tags) ->
   case Tags of
     #way_tags{name=Name} when Name /= undefined -> Name;
     #way_tags{ref=Ref} when Ref /= undefined -> Ref;
@@ -134,6 +109,35 @@ valid_way(Tags) ->
     #way_tags{highway=Any} when Any /= undefined -> true;
     _Any -> false
   end.
+
+% handle node tags
+event_nodes({startElement, _, "node", _, Attributes}, _) ->
+  [ID, Lat, Lon] = filterAttributes(Attributes, ["id", "lat", "lon"]),
+  State = {{id, list_to_atom(ID), lat, Lat, lon, Lon}, []},
+  State;
+
+event_nodes({startElement, _, "tag", _, Attributes}, State) ->
+  [K, V] = filterAttributes(Attributes, ["k", "v"]),
+  case State of
+    {Node, Tags} -> NewState = {Node,[{tag, K, V} | Tags]};
+    {Node, Tags, Refs} -> NewState = {Node,[{K, V} | Tags], Refs};
+    _Any -> NewState = State
+  end,
+  NewState;
+
+event_nodes({endElement, _, "node", _}, State) ->
+  {{id, ID, lat, Lat, lon, Lon}, Tags} = State,
+  % check if node is used within a way
+  case ets:lookup(osm_nodes_to_ways, ID) of
+    [] -> ignore;
+    _Any -> ets:insert(osm_nodes, {ID, {lat, Lat}, {lon, Lon}, {tags, Tags}})
+  end,
+  [];
+
+%% Catch-all. Pass state on as-is
+event_nodes(_Event, State) ->
+  State.
+
 
 % build a table to translate Nodes to Ways
 build_nodes_ways_tab() ->
