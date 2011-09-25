@@ -6,7 +6,14 @@
 % This module is able to parse an .osm file and writes it out as a serialized ets database file.
 
 -module(osm_parser).
--export([read/1]).
+-export([read/1, way_tags_to_record/1]).
+
+-record(way_tags, {
+  highway = undefined,
+  name = undefined,
+  ref = undefined,
+  other = []
+}).
 
 read(File) ->
   {ok, Xml} = file:read_file(File),
@@ -60,8 +67,10 @@ event({startElement, _, "nd", _, Attributes}, _State = {Node, Tags, Refs}) ->
 
 event({endElement, _, "way", _}, State) ->
   {{id, ID}, Tags, Refs} = State,
-  case lists:any(fun({K, _V})-> K == "name" end, Tags) of
-    true -> ets:insert(osm_ways, {ID, {tags, Tags}, {refs, Refs}});
+  TagsRecord = way_tags_to_record(Tags),
+  case valid_way(TagsRecord) of
+    true -> Tags1 = [{"routing_name", name(TagsRecord)}|Tags],
+      ets:insert(osm_ways, {ID, {tags, Tags1}, {refs, Refs}});
     false -> ignore
   end,
   [];
@@ -73,3 +82,28 @@ event(_Event, State) ->
 delete_tabs() ->
   ets:delete(osm_nodes),
   ets:delete(osm_ways).
+
+way_tags_to_record(WayTags) ->
+  way_tags_to_record_recursive(WayTags, #way_tags{}).
+
+way_tags_to_record_recursive([], Record) ->
+  Record;
+
+way_tags_to_record_recursive([First|Rest], Record=#way_tags{other=Other}) ->
+  Record1 = case First of
+    {"highway", Value} -> Record#way_tags{highway=Value};
+    {"ref", Value} -> Record#way_tags{ref=Value};
+    {"name", Value} -> Record#way_tags{name=Value};
+    Any -> Record#way_tags{other=[Any|Other]}
+  end,
+  way_tags_to_record_recursive(Rest, Record1).
+  
+name(Tags) ->
+  Tags#way_tags.name.
+  
+valid_way(Tags) ->
+  case Tags of
+    #way_tags{name=undefined} -> false;
+    #way_tags{name=_Any} -> true;
+    _Any -> false
+  end.
