@@ -6,7 +6,7 @@
 % This module is able to parse an .osm file and writes it out as a serialized ets database file.
 
 -module(osm_parser).
--export([read/1, way_tags_to_record/1]).
+-export([read/1]).
 
 -include("../includes/routing.hrl").
 
