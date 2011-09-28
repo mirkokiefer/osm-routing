@@ -3,82 +3,92 @@
 
 ## astar
 
-### shortest_path/2
+### shortest_path(SourceID, TargetID)
 Returns a list of nodes, that are the shortest path between 'SourceID' and 'TargetID'.
 
-### shortest_path_with_distances/2
+### shortest_path_with_distances(SourceID, TargetID)
 Returns a list of nodes, that are the shortest path between 'SourceID' and 'TargetID'. Each nodes contains the distance from 'SourceID'.
 
 
 ## geodata
 
-### neighbours/1
+### neighbours(NodeID)
 Returns the neighbours of 'NodeID'.
 
-### distance/2
+### distance(NodeAID, NodeBID)
 Returns the distance between 'NodeAID' and 'NodeBID'.
 
-### nodeid_to_coords/1
+### nodeid_to_coords(NodeID)
 Returns the coordinates of 'NodeID'.
 
-### nodes_to_coords/1
+### nodes_to_coords(List)
 Returns a list of coordinates from the nodes in 'List'.
 
-### path_angles/1
-Retunrs a list of angles between the nodes of 'Path'.
+### path_angles(Path)
+Returns a list of angles between the nodes of 'Path'.
 
-### connecting_way/2
-Retuns the connecting way between 'NodeA' and 'NodeB'.
+### connecting_way(NodeA, NodeB)
+Returns the connecting way between 'NodeA' and 'NodeB'.
 
-### way_tag/2
+### way_tag(FilterTag, WayID)
 Returns the tag 'FilterTag' of 'WayID'.
 
 ##name_server
 
 ## osm_parser
 
-### read/1
-Reads an OSM file, creates appropriate ETS tables, serializes them and write their data on disk.
-
-
-## processing
-
-### loadData/0
-Reads the ETS data from disk and creates the tables.
-
+### read(File)
+Reads an OSM file, creates appropriate ETS tables and serializes them on disk.
 
 ## requests
 
-### route/2
-Returns a list of nodes, that are the shortest path between 'SourceID' and 'TargetID'.
+### route(SourceID, TargetID)
+Returns a list of nodes, that are the shortest path between 'SourceID' and 'TargetID' nodes.
 
-### route_description/2
-Returns a detailed description of the shortest path between 'SourceID' and 'TargetID'.
+### route_description(SourceID, TargetID)
+Returns a human-readable route description of the shortest path between 'SourceID' and 'TargetID' nodes.
 
 ## routing
 
+### start()
+Starts the routing system.
+
+### stop()
+Stops the routing system.
+
+### load_osm_data(File)
+Loads OpenStreetMap data from a .osm file. The system needs to be stopped first.
+
 ## server
 
-### start/0
+### start()
 Starts the Erlang HTTP Server.
 
-### stop/0
+### stop()
 Stops the Erlang HTTP Server.
-
-### loop/1
-Gets Called by MochiWeb for each incoming request.
 
 ## store
 
-### node2ways/1
-Retuns all ways, thats 'NodeID' is part of.
+### init()
+Initializes the store with empty databases.
 
-### lookup_way/1
+### start()
+Starts the store by loading it from previously serialized files.
+
+### stop()
+Stops the store.
+
+### serialize()
+Serializes all tables to disk.
+
+### node2ways(NodeID)
+Retuns all ways that 'NodeID' is part of.
+
+### lookup_way(WayID)
 Returns the data for 'WayID'.
 
-### lookup_node/1
+### lookup_node(NodeID)
 Returns the data for 'NodeID'.
-
 
 # HTTP APIs
 
