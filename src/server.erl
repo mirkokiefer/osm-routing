@@ -28,7 +28,7 @@ stop() ->
 loop(Req) ->
   respond(Req:get(path), lists:sort(Req:parse_qs()), Req).
   
-respond("/route", [{"from", From}, {"to", To}], Req) ->
+respond("/route", [{"from", From}, {"to", To}], Req) ->             %%parameter (pfad;from to; anfrage)
   try requests:route(list_to_atom(From), list_to_atom(To)) of
     #route{path=Path, distance=Distance, time=Time} ->
       Coords = nodes_to_coords(Path),
@@ -53,6 +53,14 @@ respond("/route_description", [{"from", From}, {"to", To}], Req) ->
   
 respond("/map", _Params, Req) ->
   Req:serve_file("ui.html", filename:absname("../www"));
+
+respond("/name_server",[{"name",Name}], Req) ->    %%
+  Result = name_server:lookup_name(Name),
+  case Result of
+    [] -> Req:ok({"text/plain;charset=utf-8", "not found"});
+    [{_,ID}] -> Req:ok({"text/plain;charset=utf-8", atom_to_list(ID)})
+  end;
+
   
 respond(Path, _Params, Req) ->
   FileName = lists:nthtail(1, Path),
