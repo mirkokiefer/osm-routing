@@ -1,51 +1,94 @@
-# Erlang Modules
+# Module APIs
+
 
 ## astar
-### shortest_path/2
-### shortest_path_with_distances/2
+
+### shortest_path(SourceID, TargetID)
+Returns a list of nodes, that are the shortest path between 'SourceID' and 'TargetID'.
+
+### shortest_path_with_distances(SourceID, TargetID)
+Returns a list of nodes, that are the shortest path between 'SourceID' and 'TargetID'. Each nodes contains the distance from 'SourceID'.
+
 
 ## geodata
-### edges/1
-### distance/2
-### nodeid_to_coords/1
-### nodes_to_coords/1
-### path_angles/1
-### connecting_way/2
-### way_tag/2
+
+### neighbours(NodeID)
+Returns the neighbours of 'NodeID'.
+
+### distance(NodeAID, NodeBID)
+Returns the distance between 'NodeAID' and 'NodeBID'.
+
+### nodeid_to_coords(NodeID)
+Returns the coordinates of 'NodeID'.
+
+### nodes_to_coords(List)
+Returns a list of coordinates from the nodes in 'List'.
+
+### path_angles(Path)
+Returns a list of angles between the nodes of 'Path'.
+
+### connecting_way(NodeA, NodeB)
+Returns the connecting way between 'NodeA' and 'NodeB'.
+
+### way_tag(FilterTag, WayID)
+Returns the tag 'FilterTag' of 'WayID'.
+
+##name_server
 
 ## osm_parser
-### read/1
 
-## priority_queue
-### new/0
-### add/2
-### list/1
-### remove/2
-### remove_all/2
-### smallest/1
-
-## processing
-### loadData/0
+### read(File)
+Reads an OSM file, creates appropriate ETS tables and serializes them on disk.
 
 ## requests
-### route/2
-### route_description/2
+
+### route(SourceID, TargetID)
+Returns a list of nodes, that are the shortest path between 'SourceID' and 'TargetID' nodes.
+
+### route_description(SourceID, TargetID)
+Returns a human-readable route description of the shortest path between 'SourceID' and 'TargetID' nodes.
+
+## routing
+
+### start()
+Starts the routing system.
+
+### stop()
+Stops the routing system.
+
+### load_osm_data(File)
+Loads OpenStreetMap data from a .osm file. The system needs to be stopped first.
 
 ## server
-### start/0
-### stop/0
-### loop/1
+
+### start()
+Starts the Erlang HTTP Server.
+
+### stop()
+Stops the Erlang HTTP Server.
 
 ## store
-### node2ways/1
-### lookup_way/1
-### lookup_node/1
 
-## utils
-### float_to_string/1
-### deg2rad/1
-### rad2deg/1
-### intersection/2
+### init()
+Initializes the store with empty databases.
+
+### start()
+Starts the store by loading it from previously serialized files.
+
+### stop()
+Stops the store.
+
+### serialize()
+Serializes all tables to disk.
+
+### node2ways(NodeID)
+Retuns all ways that 'NodeID' is part of.
+
+### lookup_way(WayID)
+Returns the data for 'WayID'.
+
+### lookup_node(NodeID)
+Returns the data for 'NodeID'.
 
 # HTTP APIs
 
