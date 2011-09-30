@@ -13,7 +13,8 @@
 init() ->
   ets:new(osm_nodes, [named_table, set, public, {keypos, 2}]),
   ets:new(osm_ways, [named_table, set, public, {keypos, 2}]),
-  ets:new(osm_nodes_to_ways, [named_table, bag, public]). 
+  ets:new(osm_nodes_to_ways, [named_table, bag, public]),
+  ets:new(osm_names_to_nodes,[named_table, set, public]).
 
 start() ->
   ets:file2tab(?NODES_DB),

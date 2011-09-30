@@ -12,11 +12,13 @@
 
 start() ->
   store:start(),
-  _Http = server:start().
+  server:start(),
+  name_server:start().    %%
   
 stop() ->
   store:stop(),
-  server:stop().
+  server:stop(),
+  name_server:stop().
   
 load_osm_data(File) ->
   osm_parser:read(File).
