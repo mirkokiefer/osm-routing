@@ -39,24 +39,12 @@ Move folder to erlang path.
 Move folder to erlang path.
 
 ### OSM Routing
-Create an App folder and cd into it.
-#### Download
-	$ erl
 #### Build
-	$ cd routing/src
-	$ erl
-	$ c(astar).
-	$ c(geodata).
-	$ c(osm_parser).
-	$ c(priority_queue).
-	$ c(processing).
-	$ c(requests).
-	$ c(routing).
-	$ c(server).
-	$ c(store).
-	$ c(utils).
+	$ cd routing/ebin
+	$ erl -compile ../src/*.erl
 
 ## Usage
+Make sure you are in the ebin directory.
 ### Start Erlang Interpreter
 	$ erl
 
