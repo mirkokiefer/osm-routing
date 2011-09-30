@@ -13,7 +13,7 @@
 start() ->
   store:start(),
   server:start(),
-  name_server:start().    %%
+  name_server:start().
   
 stop() ->
   store:stop(),
