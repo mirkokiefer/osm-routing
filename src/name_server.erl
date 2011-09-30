@@ -6,10 +6,13 @@ start() ->
   ets:new(osm_names_to_nodes,[named_table, set, public]),    %%Tabelle wird angelegt; aus ets mudule new funktion nehmen
   First = ets:first(osm_nodes),   %%erste node aus osm wird genommen; über first funktion, die im ets module definiert ist
   extract_nodes(First),
-  success.         %% %%rufe extract_nodes funktion auf mit dem anfangswert, das über First erhalten
-
+  FirstWay = ets:first(osm_ways),   
+  extract_ways(FirstWay),
+  success.   
+      
 stop() ->
-  ets:delete(osm_names_to_nodes).     
+  ets:delete(osm_names_to_nodes).
+  
 
 extract_nodes(Previous) ->       %% rekursive Funktion, die alle nodes durchläuft
   Next = ets:next(osm_nodes, Previous),  %%(next und first sind Funktionen, die man im ets benutzen kann; bis jetzt kann man nur duchlaufen)
@@ -29,7 +32,7 @@ check_node(NodeID) ->                           %%Funktion, um auf Konsole node 
   {node,ID,Lat,Lon,Attributes} = Node,        %% node + Info erscheinen im Tupel in der Konsole 
   case extract_name(Attributes) of
     [] -> ignore;
-    [Any] -> store_name(Any,ID)           %%log ist rausgemacht, anstattdessen store_name hinzugefügt (aus store)(Any für irgendein name +id)
+    [Any] -> store_name(Any,[ID])           %%log ist rausgemacht, anstattdessen store_name hinzugefügt (aus store)(Any für irgendein name +id)
   end.
   
 extract_name(Attributes) ->                           
@@ -39,6 +42,27 @@ store_name(Name,ID) ->                                %% aus store module; schre
   ets:insert(osm_names_to_nodes, {string:to_lower(Name),ID}).%%name immer klein
 
 lookup_name(Name) ->
- Result = ets:lookup(osm_names_to_nodes,string:to_lower(Name)),      %% können über Funktion in DB reinschauen;wenn du namen eingibst, kommst du auch zur id des 
- Result.                                             %%namens; Fkt. Aufruf; bevor er namen sucht, klein machen
+  ets:lookup(osm_names_to_nodes,string:to_lower(Name)).    %% können über Funktion in DB reinschauen;wenn du namen eingibst, kommst du auch zur id des 
+                                             %%namens; Fkt. Aufruf; bevor er namen sucht, klein machen
+
+
+extract_ways(Previous) ->      
+  Next = ets:next(osm_ways, Previous),
+ case Next of                                    
+    '$end_of_table' -> stop;      
+    Any ->                        
+      check_ways(Next),              
+      extract_ways(Next)        
+  end.
+
+check_ways(WayID) ->                       
+  Way = store:lookup_way(WayID),           
+  {way,ID,Attributes,Nodes} = Way,  
+  case extract_name(Attributes) of
+    [] -> ignore;
+    [Any] -> store_name(Any,Nodes)           
+  end.
+
+                                            
+
 
