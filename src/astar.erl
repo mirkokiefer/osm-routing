@@ -8,14 +8,20 @@
 % The priority queue used by the algorithm is implemented in the priority_queue module.
 
 -module(astar).
--export([shortest_path/2, shortest_path_with_distances/2]).
+-export([shortest_path/2, shortest_path_with_distances/2, analyse/0]).
 
 -include("../includes/routing.hrl").
 
 -record(state, {tab, queue, visited_nodes}).
 
+analyse() ->
+  fprof:profile(file, "astar.trace"),
+  fprof:analyse([{dest, "astar.analysis"}, {cols, 120}]).
+
 shortest_path(SourceID, TargetID) ->
+  fprof:trace(start, "astar.trace"),
   [{route, Route}, _Tab] = shortest_path_internal(SourceID, TargetID),
+  fprof:trace(stop),
   Route.
 
 shortest_path_with_distances(SourceID, TargetID) ->
