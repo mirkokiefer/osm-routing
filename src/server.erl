@@ -54,12 +54,14 @@ respond("/route_description", [{"from", From}, {"to", To}], Req) ->
 respond("/map", _Params, Req) ->
   Req:serve_file("ui.html", filename:absname("../www"));
 
-respond("/name_server",[{"name",Name}], Req) ->    %%
+respond("/name_server",[{"name",Name}], Req) ->    %% Anfrage an server; haben Namen der Stadt und wollen über lookup_name funkt.die ID
   Result = name_server:lookup_name(Name),
   case Result of
-    [] -> Req:ok({"text/plain;charset=utf-8", "not found"});
-    [{_,ID}] -> Req:ok({"text/plain;charset=utf-8", atom_to_list(ID)})
-  end;
+    [] -> Req:ok({"text/plain;charset=utf-8", "not found"}); %% wenn Name nicht exisiert, dann kommt [] aud Konsole und indem Fall "not found auf"browser
+    [{_,IDs}] -> 
+      Json = mochijson2:encode(IDs),
+      Req:ok({"text/plain;charset=utf-8",Json})  %% wenn auf konsole name+id erscheint, dann wandele das die Id(die ein atom ist)in ein   
+  end;                                                                  %%um, da man browser nur string schicken kann (atom id ist in variable Id gespeichert)
 
   
 respond(Path, _Params, Req) ->
