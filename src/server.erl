@@ -70,10 +70,10 @@ respond(Path, _Params, Req) ->
 
 node_to_coords(Node) ->
   {Lat, Lon} = geodata:nodeid_to_coords(Node),
-  {struct, [{node, Node}, {lat, Lat}, {lon, Lon}]}.
+  {struct, [{node, encode(Node)}, {lat, Lat}, {lon, Lon}]}.
 
 nodes_to_coords(Path) ->
-  [{struct, [{node, Node}, {lat, Lat}, {lon, Lon}]} || {Node, {Lat, Lon}} <- lists:zip(Path, geodata:nodes_to_coords(Path))].
+  [{struct, [{node, encode(Node)}, {lat, Lat}, {lon, Lon}]} || {Node, {Lat, Lon}} <- lists:zip(Path, geodata:nodes_to_coords(Path))].
   
 encode(String) ->
   unicode:characters_to_binary(io_lib:format("~ts", [String])).
