@@ -29,7 +29,7 @@ loop(Req) ->
   respond(Req:get(path), lists:sort(Req:parse_qs()), Req).
   
 respond("/route", [{"from", From}, {"to", To}], Req) ->             %%parameter (pfad;from to; anfrage)
-  try requests:route(list_to_atom(From), list_to_atom(To)) of
+  try requests:route(From, To) of
     #route{path=Path, distance=Distance, time=Time} ->
       Coords = nodes_to_coords(Path),
       Res = {struct, [{route, Coords}, {distance, Distance}, {time, Time}]},
@@ -40,7 +40,7 @@ respond("/route", [{"from", From}, {"to", To}], Req) ->             %%parameter 
   end;
   
 respond("/route_description", [{"from", From}, {"to", To}], Req) ->
-  try requests:route_description(list_to_atom(From), list_to_atom(To)) of
+  try requests:route_description(From, To) of
     Description ->
       FormattedDescription = [{struct, [{location, node_to_coords(NodeID)}, Distance, {walk, encode(Walk)}, {direction, encode(Direction)}]} ||
         [{node, NodeID}, Distance, _Angle, {walk, Walk}, {direction, Direction}] <- Description],

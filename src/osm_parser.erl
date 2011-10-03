@@ -30,7 +30,7 @@ read(File) ->
 % handle parser callbacks for ways
 event_ways({startElement, _, "way", _, Attributes}, _) ->
   [ID] = filterAttributes(Attributes, ["id"]),
-  #way{id=list_to_atom(ID)};
+  #way{id=ID};
   
 event_ways({startElement, _, "tag", _, Attributes}, State) ->
   [K, V] = filterAttributes(Attributes, ["k", "v"]),
@@ -41,7 +41,7 @@ event_ways({startElement, _, "tag", _, Attributes}, State) ->
 
 event_ways({startElement, _, "nd", _, Attributes}, State=#way{refs=Refs}) ->
   [Ref] = filterAttributes(Attributes, ["ref"]),
-  State#way{refs=[list_to_atom(Ref) | Refs]};
+  State#way{refs=[Ref | Refs]};
 
 event_ways({endElement, _, "way", _}, State) ->
   way_read(State),
@@ -79,7 +79,7 @@ valid_way(Tags) ->
 % handle parser callbacks for nodes
 event_nodes({startElement, _, "node", _, Attributes}, _) ->
   [ID, Lat, Lon] = filterAttributes(Attributes, ["id", "lat", "lon"]),
-  #node{id=list_to_atom(ID), lat=Lat, lon=Lon};
+  #node{id=ID, lat=Lat, lon=Lon};
 
 event_nodes({startElement, _, "tag", _, Attributes}, State) ->
   [K, V] = filterAttributes(Attributes, ["k", "v"]),
