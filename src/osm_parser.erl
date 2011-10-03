@@ -21,7 +21,6 @@ read(File) ->
   store:init(),
   
   xml_parser:parse_file(File, fun event_ways/2),
-  build_nodes_ways_tab(),
   xml_parser:parse_file(File, fun event_nodes/2),
   
   store:serialize(),
@@ -104,24 +103,6 @@ node_read(Node=#node{id=ID}) ->
     [] -> ignore;
     _Any -> store:store_node(Node)
   end.
-
-% build a table to translate Nodes to Ways
-build_nodes_ways_tab() ->
-  FirstKey = ets:first(osm_ways),
-  #way{id=ID, refs=Refs} = store:lookup_way(FirstKey),
-  write_nodes_to_way(Refs, ID),
-  build_nodes_ways_tab(ets:next(osm_ways, FirstKey)).
-
-build_nodes_ways_tab('$end_of_table') ->
-  true;
-
-build_nodes_ways_tab(NextKey) ->
-  #way{id=ID, refs=Refs} = store:lookup_way(NextKey),
-  write_nodes_to_way(Refs, ID),
-  build_nodes_ways_tab(ets:next(osm_ways, NextKey)).
-  
-write_nodes_to_way(Refs, WayID) ->
-  lists:foreach(fun(Ref) -> store:store_node2wayid(Ref, WayID) end, Refs).
 
 % helper functions
 filterAttributes(Attributes, FilterAttributes) ->
