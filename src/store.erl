@@ -11,13 +11,13 @@
 -include("../includes/routing.hrl").
 
 init() ->
-  mcd:start_link(routing, []).
+  start().
 
 start() ->
-  mcd:start_link(routing, []).
+  {ok, C} = eredis:start_link(),
+  register(routing, C).
 
 stop() ->
-  mcd:do(routing, flush_all),
   stopped.
 
 serialize() ->
@@ -25,29 +25,29 @@ serialize() ->
   serialized. 
 
 node2wayids(NodeID) ->
-  case mcd:get(routing, node2way_key(NodeID)) of
-    {error,notfound} -> [];
-    {ok, Ways} -> Ways
+  case eredis:q(routing, ["GET", node2way_key(NodeID)]) of
+    {ok,undefined} -> [];
+    {ok, Ways} -> binary_to_term(Ways)
   end.
   
 lookup_way(WayID) ->
-  case mcd:get(routing, way_key(WayID)) of
-    {error,notfound} -> undefined;
-    {ok, Way} -> Way
+  case eredis:q(routing, ["GET", way_key(WayID)]) of
+    {ok,undefined} -> undefined;
+    {ok, Way} -> binary_to_term(Way)
   end.
   
 lookup_node(NodeID) ->
-  case mcd:get(routing, node_key(NodeID)) of
-    {error,notfound} -> undefined;
-    {ok, Node} -> Node
+  case eredis:q(routing, ["GET", node_key(NodeID)]) of
+    {ok,undefined} -> undefined;
+    {ok, Node} -> binary_to_term(Node)
   end.
   
 store_way(Way=#way{id=ID, refs=Refs}) ->
   store_nodeids2wayid(Refs, ID),
-  mcd:set(routing, way_key(ID), Way).
+  eredis:q(routing, ["SET", way_key(ID), term_to_binary(Way)]).
   
 store_node(Node=#node{id=ID}) ->
-  mcd:set(routing, node_key(ID), Node).
+  eredis:q(routing, ["SET", node_key(ID), term_to_binary(Node)]).
 
 store_nodeids2wayid([], _WayID) ->
   success;
@@ -57,7 +57,7 @@ store_nodeids2wayid([FirstNodeID|Rest], WayID) ->
   store_nodeids2wayid(Rest, WayID).
   
 store_nodeid2wayid(NodeID, WayID) ->
-  mcd:set(routing, node2way_key(NodeID), [WayID|node2wayids(NodeID)]).
+  eredis:q(routing, ["SET", node2way_key(NodeID), term_to_binary([WayID|node2wayids(NodeID)])]).
   
 node_key(ID) ->
   "node_" ++ ID.
