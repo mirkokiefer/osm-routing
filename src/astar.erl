@@ -5,7 +5,7 @@
 %
 % This module implements A* to find the shortest path between two nodes
 % It makes use of the geodata module for accessing data.
-% The priority queue used by the algorithm is implemented in the priority_queue module.
+% The priority queue used by the algorithm is implemented in the astar_priority_queue module.
 
 -module(astar).
 -export([shortest_path/2, shortest_path_with_distances/2]).
@@ -27,7 +27,7 @@ shortest_path_internal(SourceID, TargetID) ->
   StartT = now(),
   Tab = ets:new(shortest_path, [set, public]),
   VisitedNodes = ets:new(visited_nodes, [set, public]),
-  Q1 = priority_queue:new(),
+  Q1 = astar_priority_queue:new(),
   
   ets:insert(Tab, {SourceID, {previous, undefined}, {distance, 0}}),
   Path = recurse_nodes(SourceID, TargetID, #state{tab=Tab, queue=Q1, visited_nodes=VisitedNodes}),
@@ -51,12 +51,12 @@ recurse_nodes(Target, Target, State) ->
 recurse_nodes(Node, Target, State=#state{tab=Tab, queue=Queue, visited_nodes=Visited}) ->
   visited(Node, true, Visited),
   OldQueueEntry = add_heuristic(get_distance(Node, Tab), Node, Target),
-  Q1 = priority_queue:remove({Node, OldQueueEntry}, Queue),
+  Q1 = astar_priority_queue:remove({Node, OldQueueEntry}, Queue),
   Neighbours = neighbours(Node),
   Q2 = update_distances(Node, Target, Neighbours, State#state{queue=Q1}),
   case gb_trees:size(Q2) of
     0 -> Tab;
-    _Any -> {ClosestNode, _Distance} = priority_queue:smallest(Q2),
+    _Any -> {ClosestNode, _Distance} = astar_priority_queue:smallest(Q2),
       recurse_nodes(ClosestNode, Target, State#state{queue=Q2})
   end.
 
@@ -81,8 +81,8 @@ recurse_neighbours([Neighbour|Rest], CurrentNode, CurrentDistance, Target, State
 
 % returns an updated version of the priority queue
 update_distance(Node, PreviousNode, OldDistance, NewDistance, Target, State) ->
-  Q1 = priority_queue:remove({Node, add_heuristic(OldDistance, Node, Target)}, State#state.queue),
-  Q2 = priority_queue:add({Node, add_heuristic(NewDistance, Node, Target)}, Q1),
+  Q1 = astar_priority_queue:remove({Node, add_heuristic(OldDistance, Node, Target)}, State#state.queue),
+  Q2 = astar_priority_queue:add({Node, add_heuristic(NewDistance, Node, Target)}, Q1),
   ets:insert(State#state.tab, {Node, {previous, PreviousNode}, {distance, NewDistance}}),
   Q2.
 
