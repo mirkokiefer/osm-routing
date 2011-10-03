@@ -17,14 +17,11 @@
   other = []
 }).
 
-read(File) ->
-  store:init(),
-  
+read(File) ->  
   xml_parser:parse_file(File, fun event_ways/2),
   xml_parser:parse_file(File, fun event_nodes/2),
   
   store:serialize(),
-  store:stop(),
   success.
 
 % handle parser callbacks for ways

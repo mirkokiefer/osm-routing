@@ -11,51 +11,59 @@
 -include("../includes/routing.hrl").
 
 init() ->
-  ets:new(osm_nodes, [named_table, set, public, {keypos, 2}]),
-  ets:new(osm_ways, [named_table, set, public, {keypos, 2}]),
-  ets:new(osm_nodes_to_ways, [named_table, set, public]).
+  mcd:start_link(routing, []).
 
 start() ->
-  ets:file2tab(?NODES_DB),
-  ets:file2tab(?WAYS_DB),
-  ets:file2tab(?NODES_TO_WAYS_DB).
+  mcd:start_link(routing, []).
 
 stop() ->
-  ets:delete(osm_nodes),
-  ets:delete(osm_ways),
-  ets:delete(osm_nodes_to_ways).
+  mcd:do(routing, flush_all),
+  stopped.
 
 serialize() ->
   filelib:ensure_dir("../output/"),
-  ets:tab2file(osm_nodes, ?NODES_DB),
-  ets:tab2file(osm_ways, ?WAYS_DB),
-  ets:tab2file(osm_nodes_to_ways, ?NODES_TO_WAYS_DB). 
+  serialized. 
 
 node2wayids(NodeID) ->
-  case ets:lookup(osm_nodes_to_ways, NodeID) of
-    [] -> [];
-    [{NodeID, Ways}] -> Ways
+  case mcd:get(routing, node2way_key(NodeID)) of
+    {error,notfound} -> [];
+    {ok, Ways} -> Ways
   end.
   
 lookup_way(WayID) ->
-  case ets:lookup(osm_ways, WayID) of
-    [] -> undefined;
-    [Way|_] -> Way
+  case mcd:get(routing, way_key(WayID)) of
+    {error,notfound} -> undefined;
+    {ok, Way} -> Way
   end.
   
 lookup_node(NodeID) ->
-  case ets:lookup(osm_nodes, NodeID) of
-    [] -> undefined;
-    [Node|_] -> Node
+  case mcd:get(routing, node_key(NodeID)) of
+    {error,notfound} -> undefined;
+    {ok, Node} -> Node
   end.
   
 store_way(Way=#way{id=ID, refs=Refs}) ->
   store_nodeids2wayid(Refs, ID),
-  ets:insert(osm_ways, Way).
+  mcd:set(routing, way_key(ID), Way).
   
-store_node(Node) ->
-  ets:insert(osm_nodes, Node).
+store_node(Node=#node{id=ID}) ->
+  mcd:set(routing, node_key(ID), Node).
 
-store_nodeids2wayid(NodeIDs, WayID) ->
-  Tuples = [{NodeID, [WayID|node2wayids(NodeID)]} || NodeID <- NodeIDs],
-  ets:insert(osm_nodes_to_ways, Tuples).
+store_nodeids2wayid([], _WayID) ->
+  success;
+
+store_nodeids2wayid([FirstNodeID|Rest], WayID) ->
+  store_nodeid2wayid(FirstNodeID, WayID),
+  store_nodeids2wayid(Rest, WayID).
+  
+store_nodeid2wayid(NodeID, WayID) ->
+  mcd:set(routing, node2way_key(NodeID), [WayID|node2wayids(NodeID)]).
+  
+node_key(ID) ->
+  "node_" ++ ID.
+  
+way_key(ID) ->
+  "way_" ++ ID.
+  
+node2way_key(ID) ->
+  "node2way" ++ ID.
