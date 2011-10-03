@@ -16,9 +16,17 @@ init() ->
   ets:new(osm_nodes_to_ways, [named_table, set, public]).
 
 start() ->
-  ets:file2tab(?NODES_DB),
-  ets:file2tab(?WAYS_DB),
-  ets:file2tab(?NODES_TO_WAYS_DB).
+  DBsExist = filelib:is_regular(?NODES_DB) and
+    filelib:is_regular(?WAYS_DB) and
+    filelib:is_regular(?NODES_TO_WAYS_DB),
+  if
+    DBsExist ->
+      ets:file2tab(?NODES_DB),
+      ets:file2tab(?WAYS_DB),
+      ets:file2tab(?NODES_TO_WAYS_DB);
+    true -> init()
+  end,
+  success.
 
 stop() ->
   ets:delete(osm_nodes),
