@@ -11,13 +11,13 @@
 -include("../includes/routing.hrl").
 
 init() ->
-  mcd:start_link(routing, []).
+  merle:connect().
 
 start() ->
-  mcd:start_link(routing, []).
+  merle:connect().
 
 stop() ->
-  mcd:do(routing, flush_all),
+  %mcd:do(routing, flush_all),
   stopped.
 
 serialize() ->
@@ -25,29 +25,29 @@ serialize() ->
   serialized. 
 
 node2wayids(NodeID) ->
-  case mcd:get(routing, node2way_key(NodeID)) of
-    {error,notfound} -> [];
-    {ok, Ways} -> Ways
+  case merle:getkey(node2way_key(NodeID)) of
+    undefined -> [];
+    Ways -> Ways
   end.
   
 lookup_way(WayID) ->
-  case mcd:get(routing, way_key(WayID)) of
-    {error,notfound} -> undefined;
-    {ok, Way} -> Way
+  case merle:getkey(way_key(WayID)) of
+    undefined -> undefined;
+    Way -> Way
   end.
   
 lookup_node(NodeID) ->
-  case mcd:get(routing, node_key(NodeID)) of
-    {error,notfound} -> undefined;
-    {ok, Node} -> Node
+  case merle:getkey(node_key(NodeID)) of
+    undefined -> undefined;
+    Node -> Node
   end.
   
 store_way(Way=#way{id=ID, refs=Refs}) ->
   store_nodeids2wayid(Refs, ID),
-  mcd:set(routing, way_key(ID), Way).
+  merle:set(way_key(ID), Way).
   
 store_node(Node=#node{id=ID}) ->
-  mcd:set(routing, node_key(ID), Node).
+  merle:set(node_key(ID), Node).
 
 store_nodeids2wayid([], _WayID) ->
   success;
@@ -57,7 +57,7 @@ store_nodeids2wayid([FirstNodeID|Rest], WayID) ->
   store_nodeids2wayid(Rest, WayID).
   
 store_nodeid2wayid(NodeID, WayID) ->
-  mcd:set(routing, node2way_key(NodeID), [WayID|node2wayids(NodeID)]).
+  merle:set(node2way_key(NodeID), [WayID|node2wayids(NodeID)]).
   
 node_key(ID) ->
   "node_" ++ ID.
