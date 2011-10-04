@@ -1,7 +1,7 @@
 # OSM Routing
 
 ## Projektziel
-Ziel des Projektes ist es ein Navigationssystem für körperlich behinderte Menschen zu entwickeln. Es soll möglich sein, den kürzesten Weg zwischen zwei Punkten zu ermitteln. Darüberhinaus muss der ermittelte Weg von einem Menschen mit körperlicher Behinderung komplett begehbar sein. Das System soll ausserdem eine Wegbeschreibung des ermittelten Weges erzeugen.
+Ziel des Projektes ist die Schaffung der technischen Infrastruktur welche die Entwicklung eines Navigationssystems für körperlich behinderte Menschen ermöglicht. Es soll möglich sein, den kürzesten Weg zwischen zwei Punkten zu ermitteln. Darüberhinaus muss der ermittelte Weg von einem Menschen mit körperlicher Behinderung komplett begehbar sein. Das System soll ausserdem eine Wegbeschreibung des ermittelten Weges erzeugen.
 Das Navigationssystem arbeitet auf den Daten des "Open Street Map" Projektes, also mit .osm Dateien.
 
 ## Architektur
@@ -11,13 +11,12 @@ Im folgenden wird eine Übersicht über die Architektur des Systems gegeben. Daz
 ![Overview](routing.pdf)
 
 ### Bearbeitung einer Anfrage an das System
-1. HTTP anfrage
-2. server:request() bearbeitet anfrage
-3. requests:route() wird aufgerufen
-4. route berechnet über astar modul
-5. astar holt daten über geodata modul
-6. geodata greift über stor modul auf ets table zu
-
+1. HTTP Anfrage wird gesendet.
+2. Der Server erhält die Anfrage. Die Bearbeitung der Anfrage übernimmt das Erlang System.
+3. server:request() wird  aufgerufen. Diese Funktion dient der Erkennung der Art der Anfrage und zur Weiterleitung an die entsprechenden Submodule.
+4. requests:route() wird aufgerufen. Diese Funktion berechnet die Route der Anfrage. Dies geschieht mithilfe der Funktionen des astar Erlang moduls.
+5. Die Funtionen aus dem astar Modul greifen zur Berechnung der Route auf das geodata Erlang Modul zu. Das geodata Modul dient als High-Level API für die Datenbank. Alle Anfrage des geodata Moduls an die Datenbank laufen über das store Modul, welches als Low-Level API für diese dient.
+6. Nachdem die Route berechnet ist wird die HTTP Antwort in JSON enkodiert. Anschliesend sendet die Funktion server:request() die HTTP Antwort.
 
 ### Erlang Module
 #### astar
@@ -54,7 +53,7 @@ PRO:
 Erlang läuft auf einer VM. Damit ist es sehr leicht möglich ein Programm zu ändern, während es läuft, ohne es komplett neu zu kompilieren und neu zu starten. Dies erhöht die Produktivität.
  
 * Referenzielle Transparenz:
-Da der einzige Effekt einer nebeneffektfreien Funktion ihr Rückgabewert ist, sind Sie leichter zu verstehen als Prozeduren.
+Da der einzige Effekt einer nebeneffektfreien Funktion ihr Rückgabewert ist, ist Sie leichter zu verstehen als eine Prozedur.
 
 * Deklarative Sprache:
 Erlang ist eine Deklarative Sprache. Im vergleich zu imperativen Sprachen führt das zu kürzeren, leichter verständlichen Programmen.
@@ -65,7 +64,7 @@ Prozesse sind Teil der Erlang VM und nicht Teil des Betriebssystems. Dadurch sin
 KONTRA:
 
 * Performancekritischer, sequentieller Code:
-Durch die Indirektion der VM geht ein Teil der Performance der Hardware verloren. Obwohl der grösste Teil des Systems durch IO Operationen dominiert wird, gibt es kleine performancekritische, sequentielle Code Stücke (z.B. der routing Algorithmus). Hier könnte man durch eine Hardwarenhe Sprache wie C eine verbesserte Antwortzeit erreichen.
+Durch die Indirektion der VM geht ein Teil der Performance der Hardware verloren. Obwohl der grösste Teil des Systems durch IO Operationen dominiert wird, gibt es kleine, performancekritische, sequentielle Codestücke (z.B. der routing Algorithmus). Hier könnte man durch eine Hardwarenahe Sprache wie C eine verbesserte Antwortzeit erreichen.
 
 ### Datenbank
 
@@ -79,12 +78,12 @@ Da ets Tabellen einfache Key-Value Stores sind, sind Sie sehr einfach zu benutze
 * Erlang Modul:
 ets Tabellen sind Teil des Erlang Systems. Damit sind Sie direkt über Erlang Syntax verwendbar. Darüber hinaus werden die Abhängigkeiten des Systems nicht unnötig erweitert.
 
-* In-Memory Datenbank
+* In-Memory Datenbank:
 ets Tabellen werden komplett im Hauptspeicher gehalten. Zugriffe auf die Tabellen sind damit sehr schnell.
 
 KONTRA:
 
-* Speicherverbrauch
+* Speicherverbrauch:
 Da alle Tabellen komplett im Hautspeicher gehalten werden, verbrauchen diese viel Platz. Es ist somit nicht möglich extrem grosse .osm Dateien einzulesen.
 
 ### Algorithmus
