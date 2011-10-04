@@ -9,7 +9,7 @@ Das System soll ausserdem eine Wegbeschreibung des ermittelten Weges generieren.
 ## Architektur
 Im folgenden wird eine Übersicht über die Architektur des Systems gegeben. Dazu gehören ein Diagramm über die einzelnen Softwaremodule, eine Beschreibung des Ablaufs einer Anfrage sowie eine Übersicht über die verwendeten Erlang Module.
 
-### Diagramm
+
 ![Overview](routing.pdf)
 
 ### Bearbeitung einer Anfrage an das System
@@ -133,7 +133,7 @@ Ausgewertet wurden verschiedene Metriken von drei Routen unterschiedlicher Läng
 
 ## Weiterentwicklung
 ### Geochouch
-Es bietet sich an, das Routing-System an GeoCouch anzuknüpfen. GeoCouch ermöglicht die Berechnung von Bounding-Box anfragen, welche für eine weitere Verbesserung der Wegbeschreibung und einen fortgeschrittenen Name-Server nötig sind.
+Es bietet sich an, das Routing-System an GeoCouch anzuknüpfen. GeoCouch ermöglicht die Berechnung von Bounding-Box Anfragen, welche für eine weitere Verbesserung der Wegbeschreibung und einen fortgeschrittenen Name-Server nötig sind.
 Da GeoCouch/CouchDB ebenfalls in Erlang implementiert wurde, ließe sich das Routing System sogar zu einem CouchDB-Plugin entwickeln. Das hätte den Vorteil einer schnelleren Daten-Zugriffszeit und würde das Deployment erleichtern.
 Ein mit GeoCouch gebundeltes Routing System bietet beste Vorraussetzungen zur Entwicklung von Routing-Webapps. Der Entwickler dieser Apps müsste lediglich JavaScript und HTML beherrschen, da die komplette Backend-Funktionalität von GeoCouch abgedeckt werden kann.
 
