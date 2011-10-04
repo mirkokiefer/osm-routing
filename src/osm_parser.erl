@@ -56,7 +56,8 @@ way_read(Way=#way{tags=Tags}) ->
       store:store_way(Way#way{tags=Tags1});
     false -> ignore
   end.
-  
+
+% patterns to infer way name:
 way_name(Tags) ->
   case Tags of
     #way_tags{name=Name} when Name /= undefined -> Name;
@@ -64,7 +65,8 @@ way_name(Tags) ->
     #way_tags{highway=Highway} when Highway /= undefined -> Highway;
     _Any -> "unknown"
   end.
-  
+ 
+% patterns to validate a way: 
 valid_way(Tags) ->
   case Tags of
     #way_tags{highway="motorway"} -> false;
