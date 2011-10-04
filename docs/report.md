@@ -1,6 +1,8 @@
 # OSM Routing
 
 ## Projektziel
+Ziel des Projektes ist es ein Navigationssystem für körperlich behinderte Menschen zu entwickeln. Es soll möglich sein, den kürzesten Weg zwischen zwei Punkten zu ermitteln. Darüberhinaus muss der ermittelte Weg von einem Menschen mit körperlicher Behinderung komplett begehbar sein. Das System soll ausserdem eine Wegbeschreibung des ermittelten Weges erzeugen.
+Das Navigationssystem arbeitet auf den Daten des "Open Street Map" Projektes, also mit .osm Dateien.
 
 ## Architektur
 Im folgenden wird eine Übersicht über die Architektur des Systems gegeben. Dazu gehören ein Diagramm über die einzelnen Softwaremodule, eine Beschreibung des Ablaufs einer Anfrage sowie eine Übersicht über die verwendeten Erlang Module.
@@ -44,9 +46,9 @@ Dieses Modul dient als API der ets Tabellen. Die ets Tabellen sollten nur über 
 
 ## Softwarekomponenten
 ### Programmiersprache
-Die Wahl der Programmiersprache viel auf Erlang.
+Die Wahl der Programmiersprache des Backends viel auf Erlang.
 
-Pro:
+PRO:
 
 * Virtuelle Maschine:
 Erlang läuft auf einer VM. Damit ist es sehr leicht möglich ein Programm zu ändern, während es läuft, ohne es komplett neu zu kompilieren und neu zu starten. Dies erhöht die Produktivität.
@@ -60,7 +62,7 @@ Erlang ist eine Deklarative Sprache. Im vergleich zu imperativen Sprachen führt
 * Leichtgewichtige Prozesse:
 Prozesse sind Teil der Erlang VM und nicht Teil des Betriebssystems. Dadurch sind Sie wesentlich leichtgewichtiger als OS Prozesse oder sogar Threads. Auf einem handelsüblichen Rechner ist es möglich mehrere hundertausend Erlang Prozesse laufen zu lassen. Damit ist Erlang optimal für ein asynchrones und ausfallsicheres System geeignet.
 
-Kontra:
+KONTRA:
 
 * Performancekritischer, sequentieller Code:
 Durch die Indirektion der VM geht ein Teil der Performance der Hardware verloren. Obwohl der grösste Teil des Systems durch IO Operationen dominiert wird, gibt es kleine performancekritische, sequentielle Code Stücke (z.B. der routing Algorithmus). Hier könnte man durch eine Hardwarenhe Sprache wie C eine verbesserte Antwortzeit erreichen.
@@ -69,18 +71,18 @@ Durch die Indirektion der VM geht ein Teil der Performance der Hardware verloren
 
 Als Datenbank werden mehrere ets Tabellen verwendet.
 
-Pro:
+PRO:
 
 * Einfache API:
-Die ets Tabelle einfache Key-Value Stores sind, sind Sie sehr einfach zu benutzen.
+Da ets Tabellen einfache Key-Value Stores sind, sind Sie sehr einfach zu benutzen.
 
 * Erlang Modul:
-ets Tabellen sind Teil des Erlang Systems. Damit sind Sie direkt über Erlang Syntax verwendbar. Darüber hinaus werden die Abhängigkeiten des Systems nicht erweitert.
+ets Tabellen sind Teil des Erlang Systems. Damit sind Sie direkt über Erlang Syntax verwendbar. Darüber hinaus werden die Abhängigkeiten des Systems nicht unnötig erweitert.
 
 * In-Memory Datenbank
-ets Tabellen werden komplett im Hauptspeicher gehalten. Zugriffe auf die Tabelle sind damit sher schnell.
+ets Tabellen werden komplett im Hauptspeicher gehalten. Zugriffe auf die Tabellen sind damit sehr schnell.
 
-Kontra:
+KONTRA:
 
 * Speicherverbrauch
 Da alle Tabellen komplett im Hautspeicher gehalten werden, verbrauchen diese viel Platz. Es ist somit nicht möglich extrem grosse .osm Dateien einzulesen.
@@ -101,7 +103,7 @@ Da alle besuchten Knoten in einer Liste gahelten werden, benötigt A* im worst-c
 ### HTTP API
 Das gesamte System wird über eine HTTP Schnittstelle angesprochen.
 
-Pro:
+PRO:
 
 * Universelle API:
 Sowohl lokale Anfragen als auch Netzwerkanfragen können über eine API getätigt werden.
@@ -109,13 +111,17 @@ Sowohl lokale Anfragen als auch Netzwerkanfragen können über eine API getätig
 * Einfache API:
 HTTP Anfragen sind sehr einfach zu stellen. Es existiert zu jeder populären Sprache ein entsprechendes Modul.
 
-Kontra:
+KONTRA:
 
 * Nichts (bei der Art des Systems).
-
 
 
 ## Weiterentwicklung
 ### Geochouch
 ### Polymaps
 ### Algorithmus
+
+## Mitwirkende
+* Johannes Auer
+* Haykuhi Jaghinyan
+* Mirko Kiefer
