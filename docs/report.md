@@ -129,9 +129,27 @@ Ausgewertet wurden verschiedene Metriken von drei Routen unterschiedlicher Läng
 
 ## Weiterentwicklung
 ### Geochouch
+Es bietet sich an, das Routing-System an GeoCouch anzuknüpfen. GeoCouch ermöglicht die Berechnung von Bounding-Box anfragen, welche für eine weitere Verbesserung der Wegbeschreibung und einen fortgeschrittenen Name-Server nötig sind.
+Da GeoCouch/CouchDB ebenfalls in Erlang implementiert wurde, ließe sich das Routing System sogar zu einem CouchDB-Plugin entwickeln. Das hätte den Vorteil einer schnelleren Daten-Zugriffszeit und würde das Deployment erleichtern.
+Ein mit GeoCouch gebundeltes Routing System bietet beste Vorraussetzungen zur Entwicklung von Routing-Webapps. Der Entwickler dieser Apps müsste lediglich JavaScript und HTML beherrschen, da die komplette Backend-Funktionalität von GeoCouch abgedeckt werden kann.
+
+* https://github.com/couchbase/geocouch
+* http://www.couchbase.org/
+
+###GeoJson
+Sämtliche APIs des Routing-Systems sollten auf GeoJson standardisiert werden. GeoJson ist ein leichtgewichtiger Standard für Geo-Daten, der sich wachsender Beliebtheit in der Webentwicklung erfreut.
+Die Standardisierung würde die Verwendung vor allem von UI-libraries deutlich erleichtern.
+
+* http://geojson.org/
 
 ### Polymaps
-### Algorithmus
+Polymaps ist eine JavaScript library, die das Erstellen stark angepasster und dynamischer Karten ermöglicht. Als karthografische Ressourcen können OpenStreetMap, Google Maps, Bing und weitere Anbieter eingebunden werden.
+Die Anpassung und das Anzeigen zusätzlicher Informationen (Pfade, Lables, Statistiken, ...) auf der Karte erfolgt über SVG und GeoJson.
+Es eignet sich besonders Polymaps zusammen mit d3.js zu verwenden - eine weitere Javascript library, die das Erstellen datengetriebener Dokumente ermöglicht.
+Hinter Polymaps und d3.js stehen herraussragende Entwickler der Stanford Visualization Group und eine weitere Wartung der libraries ist sicher.
+
+* http://polymaps.org/
+* http://mbostock.github.com/d3/
 
 ## Mitwirkende
 * Johannes Auer
