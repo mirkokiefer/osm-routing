@@ -115,9 +115,21 @@ KONTRA:
 
 * Nichts (bei der Art des Systems).
 
+##Performanz-Tests
+Ausgewertet wurden verschiedene Metriken von drei Routen unterschiedlicher Länge:
+
+| Metrik | Rohrbach - Uni | OMZ Uni - Mensa Uni | OMZ Uni - Mannheim |
+| -			| -				| - | - |
+| Zeit	| 82 ms | 190 ms	 | 1520 ms |
+| Nodes in Ergebnis | 20 | 25 | 71 |
+| Pfadlänge | 460 m | 4151 m | 17 866 m |
+| Besuchte Nodes in Algorithmus | 451 | 2550 | 15816 |
+| Speicherbedarf | 44 k words | 220 k words | 1338 k words |
+
 
 ## Weiterentwicklung
 ### Geochouch
+
 ### Polymaps
 ### Algorithmus
 
