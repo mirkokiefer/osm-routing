@@ -8,7 +8,7 @@ Starts the routing system.
 Stops the routing system.
 
 ### load_osm_data(File)
-Loads OpenStreetMap data from a .osm file. The system needs to be stopped first.
+Loads OpenStreetMap data from a .osm file. The system needs to be started first.
 
 # HTTP APIs
 ##Route

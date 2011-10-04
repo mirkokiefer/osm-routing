@@ -1,8 +1,10 @@
 # OSM Routing
 
 ## Projektziel
-Ziel des Projektes ist die Schaffung der technischen Infrastruktur welche die Entwicklung eines Navigationssystems für körperlich behinderte Menschen ermöglicht. Es soll möglich sein, den kürzesten Weg zwischen zwei Punkten zu ermitteln. Darüberhinaus muss der ermittelte Weg von einem Menschen mit körperlicher Behinderung komplett begehbar sein. Das System soll ausserdem eine Wegbeschreibung des ermittelten Weges erzeugen.
-Das Navigationssystem arbeitet auf den Daten des "Open Street Map" Projektes, also mit .osm Dateien.
+Ziel des Projektes ist die Schaffung der technischen Infrastruktur, welche die Entwicklung eines Navigationssystems für körperlich behinderte Menschen ermöglicht.  
+Es soll möglich sein, den kürzesten Weg zwischen zwei Nodes eines OpenStreetMap Datensets zu ermitteln.  
+Der ermittelte Weg soll von einem Menschen mit körperlicher Behinderung komplett begehbar sein.  
+Das System soll ausserdem eine Wegbeschreibung des ermittelten Weges generieren.
 
 ## Architektur
 Im folgenden wird eine Übersicht über die Architektur des Systems gegeben. Dazu gehören ein Diagramm über die einzelnen Softwaremodule, eine Beschreibung des Ablaufs einer Anfrage sowie eine Übersicht über die verwendeten Erlang Module.
@@ -27,9 +29,10 @@ Diese Modul dient als High-Level API für die Datenbank. Alle Zugriffe auf die D
 
 #### osm_parser
 Mithilfe dieses Moduls ist es mögich eine .osm Datei auszulesen und deren Inhalt in der Datenbank zu sichern.
+Die Daten werden beim Einlesen über generische Regeln gefiltert. So lassen sich leicht für Behinderte ungeignete Wege aus dem Datenset entfernen.
 
 #### priority_queue
-Dieses Modul implementiert eine Prioritätswarteschlange.
+Dieses Modul implementiert eine Prioritätswarteschlange, welche vom Routing-Algorithmus benötigt wird.
 
 #### requests
 Dieses Modul implementiert die HTTP Antworten des HTTP Servers.
@@ -50,7 +53,7 @@ Die Wahl der Programmiersprache des Backends viel auf Erlang.
 PRO:
 
 * Virtuelle Maschine:
-Erlang läuft auf einer VM. Damit ist es sehr leicht möglich ein Programm zu ändern, während es läuft, ohne es komplett neu zu kompilieren und neu zu starten. Dies erhöht die Produktivität.
+Erlang läuft auf einer VM. Damit ist es sehr leicht möglich ein Programm im laufenden Betrieb zu ändern, ohne es komplett neu zu kompilieren und neu zu starten. Dies erhöht die Entwickler-Produktivität.
  
 * Referenzielle Transparenz:
 Da der einzige Effekt einer nebeneffektfreien Funktion ihr Rückgabewert ist, ist Sie leichter zu verstehen als eine Prozedur.
@@ -70,6 +73,8 @@ Durch die Indirektion der VM geht ein Teil der Performance der Hardware verloren
 
 Als Datenbank werden mehrere ets Tabellen verwendet.
 
+* http://www.erlang.org/doc/man/ets.html
+
 PRO:
 
 * Einfache API:
@@ -87,17 +92,17 @@ KONTRA:
 Da alle Tabellen komplett im Hautspeicher gehalten werden, verbrauchen diese viel Platz. Es ist somit nicht möglich extrem grosse .osm Dateien einzulesen.
 
 ### Algorithmus
-Zur Berechnung der kürzesten Route zwischen zwei Knoten wird der A* Algorithmus verwendet.
+Zur Berechnung der kürzesten Route zwischen zwei Knoten wird der A-Star Algorithmus verwendet.
 
 PRO:
 
 * Einfach
-A* ist leicht zu implementieren.
+A-Star ist leicht zu implementieren. Sämtliche in vergleichbaren Systemen implementierten Algorithmen basieren auf A-Star mit zusätzlichen Optimierungen.
 
 KONTRA:
 
 * Speicherbedarf
-Da alle besuchten Knoten in einer Liste gahelten werden, benötigt A* im worst-case sehr viel Speicher.
+Da alle besuchten Knoten in einer Liste gahelten werden, benötigt A-Star im worst-case sehr viel Speicher.
 
 ### HTTP API
 Das gesamte System wird über eine HTTP Schnittstelle angesprochen.
