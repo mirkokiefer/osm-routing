@@ -1,5 +1,5 @@
 -module(name_server).
--export([start/0,stop/0,lookup_name/1,extract_nodes/1]).
+-export([start/0,stop/0,lookup_name/1]).
 
 
 start() ->
@@ -45,7 +45,7 @@ lookup_name(Name) ->
                                              %%namens; Fkt. Aufruf; bevor er namen sucht, klein machen
 
 
-extract_ways(CurrentNode) ->      
+extract_ways(CurrentNode) ->      %%das gleiche wie mit nodes Tabelle, nur mit ways Tabelle
  case CurrentNode of                                    
     '$end_of_table' -> stop;      
     Any ->                        
