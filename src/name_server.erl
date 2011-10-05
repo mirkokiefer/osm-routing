@@ -46,8 +46,8 @@ lookup_name(Name) ->
 
 
 extract_ways(CurrentNode) ->      %%das gleiche wie mit nodes Tabelle, nur mit ways Tabelle
- case CurrentNode of                                    
-    '$end_of_table' -> stop;      
+ case CurrentNode of                                   
+    '$end_of_table' -> stop;      %%falls Tabelle leer...
     Any ->                        
       check_ways(CurrentNode), 
       NextNode = ets:next(osm_ways, CurrentNode),             
