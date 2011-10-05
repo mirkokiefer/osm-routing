@@ -56,8 +56,8 @@ extract_ways(CurrentNode) ->      %%das gleiche wie mit nodes Tabelle, nur mit w
 
 check_ways(WayID) ->                       
   Way = store:lookup_way(WayID),        %% in neue Tabelle die ways reinschreiben   
-  {way,ID,Attributes,Nodes} = Way,  
-  case extract_name(Attributes) of
+  {way,ID,Attributes,Nodes} = Way,      %%Tupelschema
+  case extract_name(Attributes) of      
     [] -> ignore;
     [Any] -> store_name(Any,Nodes)           
   end.
