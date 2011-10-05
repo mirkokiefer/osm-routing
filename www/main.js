@@ -16,7 +16,7 @@ var getParameterByName = function(name) {
   return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 };
 
-var displayMap = function(from, to) {
+var displayMap = function(from, to) {                                   //
   $.get('route?from=' + from + '&to=' + to, function(json) {
     var data = JSON.parse(json);
     var coords = data.route.map(function(each) {
@@ -29,9 +29,9 @@ var displayMap = function(from, to) {
       center: myLatLng,
       mapTypeId: google.maps.MapTypeId.ROADMAP
     }; 
-    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions); //lege Karte an
     
-    var path = new google.maps.Polyline({
+    var path = new google.maps.Polyline({              //zeichnen Linie
       path: coords,
       map: map,
       strokeColor: "#FF0000",
@@ -39,8 +39,8 @@ var displayMap = function(from, to) {
       strokeWeight: 2
     });
     
-    $.get('route_description?from=' + from + '&to=' + to, function(routeDescriptionJson) {
-      var routeDescription = JSON.parse(routeDescriptionJson).description;
+    $.get('route_description?from=' + from + '&to=' + to, function(routeDescriptionJson) {   //  function(routeDescriptionJson) ist call back funktion
+      var routeDescription = JSON.parse(routeDescriptionJson).description; //die erst gerufen wird, wenn alle Daten im Json Format schon da
       var index = 1;
       routeDescription.forEach(function(each) {
         var options = {
@@ -48,7 +48,7 @@ var displayMap = function(from, to) {
           map: map,
           title: index.toString()
         };
-        new google.maps.Marker(options);
+        new google.maps.Marker(options); // lege Marker an
         index++;
       });
       displayRouteDescription(routeDescription, {time: data.time, distance: data.distance});
@@ -56,7 +56,7 @@ var displayMap = function(from, to) {
   });
 };
 
-var displayEmptyMap = function() {
+var displayEmptyMap = function() {                                              
   //focus on Heidelberg
   var myLatLng = new google.maps.LatLng(49.3970139, 8.679436);
   var myOptions = {
@@ -84,7 +84,7 @@ var displayRouteDescription = function(data, stats) {
   $('#directions').html(text.join(''));
 };
 
-var initForm = function() {
+var initForm = function() {               
   $('#submit').click(function() {
     var from = $("#from").val();
     var to = $("#to").val();
@@ -95,16 +95,22 @@ var initForm = function() {
 $(function() {
   var from = getParameterByName('from');
   var to = getParameterByName('to');
-  if(getParameterByName('develop') == 'true') {
-    developMode = true;
-  }
   $("#from").val(from);
   $("#to").val(to);
-  displayMap(from, to);
-  if(from && to) {
-    displayMap(from, to);
-  } else {
-    displayEmptyMap();
-  }
   initForm();
+
+  $.get("name_server?name="+ from, function(fromJson) {
+    var fromData = JSON.parse(fromJson);
+    var fromId = fromData[0];
+    $.get("name_server?name="+ to, function(toJson) {
+      var toData = JSON.parse(toJson);
+      var toId = toData[0];
+      console.log([fromId,toId])
+      if(fromId && toId) {
+        displayMap(fromId, toId);
+      } else {
+        displayEmptyMap();
+      } 
+    });    
+  });
 });

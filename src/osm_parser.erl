@@ -17,21 +17,16 @@
   other = []
 }).
 
-read(File) ->
-  store:init(),
-  
+read(File) ->  
   xml_parser:parse_file(File, fun event_ways/2),
-  build_nodes_ways_tab(),
-  xml_parser:parse_file(File, fun event_nodes/2),
-  
+  xml_parser:parse_file(File, fun event_nodes/2),  
   store:serialize(),
-  store:stop(),
   success.
 
 % handle parser callbacks for ways
 event_ways({startElement, _, "way", _, Attributes}, _) ->
   [ID] = filterAttributes(Attributes, ["id"]),
-  #way{id=list_to_atom(ID)};
+  #way{id=ID};
   
 event_ways({startElement, _, "tag", _, Attributes}, State) ->
   [K, V] = filterAttributes(Attributes, ["k", "v"]),
@@ -42,7 +37,7 @@ event_ways({startElement, _, "tag", _, Attributes}, State) ->
 
 event_ways({startElement, _, "nd", _, Attributes}, State=#way{refs=Refs}) ->
   [Ref] = filterAttributes(Attributes, ["ref"]),
-  State#way{refs=[list_to_atom(Ref) | Refs]};
+  State#way{refs=[Ref | Refs]};
 
 event_ways({endElement, _, "way", _}, State) ->
   way_read(State),
@@ -61,7 +56,8 @@ way_read(Way=#way{tags=Tags}) ->
       store:store_way(Way#way{tags=Tags1});
     false -> ignore
   end.
-  
+
+% patterns to infer way name:
 way_name(Tags) ->
   case Tags of
     #way_tags{name=Name} when Name /= undefined -> Name;
@@ -69,7 +65,8 @@ way_name(Tags) ->
     #way_tags{highway=Highway} when Highway /= undefined -> Highway;
     _Any -> "unknown"
   end.
-  
+ 
+% patterns to validate a way: 
 valid_way(Tags) ->
   case Tags of
     #way_tags{highway="motorway"} -> false;
@@ -80,7 +77,7 @@ valid_way(Tags) ->
 % handle parser callbacks for nodes
 event_nodes({startElement, _, "node", _, Attributes}, _) ->
   [ID, Lat, Lon] = filterAttributes(Attributes, ["id", "lat", "lon"]),
-  #node{id=list_to_atom(ID), lat=Lat, lon=Lon};
+  #node{id=ID, lat=Lat, lon=Lon};
 
 event_nodes({startElement, _, "tag", _, Attributes}, State) ->
   [K, V] = filterAttributes(Attributes, ["k", "v"]),
@@ -104,24 +101,6 @@ node_read(Node=#node{id=ID}) ->
     [] -> ignore;
     _Any -> store:store_node(Node)
   end.
-
-% build a table to translate Nodes to Ways
-build_nodes_ways_tab() ->
-  FirstKey = ets:first(osm_ways),
-  #way{id=ID, refs=Refs} = store:lookup_way(FirstKey),
-  write_nodes_to_way(Refs, ID),
-  build_nodes_ways_tab(ets:next(osm_ways, FirstKey)).
-
-build_nodes_ways_tab('$end_of_table') ->
-  true;
-
-build_nodes_ways_tab(NextKey) ->
-  #way{id=ID, refs=Refs} = store:lookup_way(NextKey),
-  write_nodes_to_way(Refs, ID),
-  build_nodes_ways_tab(ets:next(osm_ways, NextKey)).
-  
-write_nodes_to_way(Refs, WayID) ->
-  lists:foreach(fun(Ref) -> store:store_node2wayid(Ref, WayID) end, Refs).
 
 % helper functions
 filterAttributes(Attributes, FilterAttributes) ->

@@ -13,9 +13,11 @@
 
 neighbours(NodeID) ->
   WayIds = store:node2wayids(NodeID),
-  Ways = lists:map(fun(WayID) -> #way{refs=Refs} = store:lookup_way(WayID),
-    Refs end, WayIds),
-  Neighbours = lists:flatten(lists:map(fun(Refs) -> neighbours(NodeID, Refs) end, Ways)),
+  Refs = lists:map(fun(WayID) ->
+    #way{refs=Refs} = store:lookup_way(WayID),
+    Refs
+  end, WayIds),
+  Neighbours = utils:flatten_once(Refs),
   NeighboursDetails = [{{node, Neighbour}, {distance, distance(NodeID, Neighbour)}} ||
     Neighbour <- Neighbours, store:lookup_node(Neighbour) =/= undefined],
   NeighboursDetails.
@@ -96,22 +98,3 @@ coords(Node) ->
   {LatFloat, _} = string:to_float(Node#node.lat),
   {LonFloat, _} = string:to_float(Node#node.lon),
   {LatFloat, LonFloat}.
-
-neighbours(Element, List) ->
-  case List of
-    [] -> Result = [];
-    [Element] -> Result = [];
-    [Element | Rest] -> [Next | _] = Rest, Result = [Next];
-    [First | Rest] -> Result = neighbours(Element, First, Rest)
-  end,
-  Result.
-  
-neighbours(Element, Last, List) ->
-  case List of
-    [] -> Result = [Last];
-    [Element | []] -> Result = [Last];
-    [Element | Rest] -> [Next | _] = Rest, Result = [Last, Next];
-    [_First | []] -> Result = [];
-    [First | Rest] -> Result = neighbours(Element, First, Rest)
-  end,
-  Result.
